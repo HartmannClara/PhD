@@ -477,8 +477,8 @@ switch2_from=datetime('2022-07-12 9:00:00.000','InputFormat','yyyy-MM-dd HH:mm:s
 
 %maybe just sorting the trials?
 
-bsl_trials = find(b_trials.start_time<)
-switch_trials = 
+%bsl_trials = find(b_trials.start_time<)
+%switch_trials = 
 
 
 

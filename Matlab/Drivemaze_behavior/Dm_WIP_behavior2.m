@@ -1,9 +1,9 @@
-%Drivemaze etho and ca imaging plotter
+%Drivemaze etho and ca imaging plotter 
 %2022March session_starts
 close all, clear all
 %animals=table(['94331472'; '328340178184'; '335490249236'; '328340226232']);%
-animals='328340226232';
-'94331472 grin1 female';
+animals='3354903011';
+%'94331472 grin1 female';
 f1=figure;
 
 % f4=figure;
@@ -14,19 +14,19 @@ clearvars -except a f1 f2 f3 f4 f5 animals binned b_trials b_dur binned_exp
 % animal=cellstr(table2cell(animals(a,1)));
 animal=animals;
 % filename=['C:\Data\Drivemaze\Drivemaze_imaging_grin1' animal{1, 1} '_events.csv'];
-filename=['C:\Users\cha206\Data\g2\' animal '_events.csv'];
+filename=['D:\Exp_2_DM_exploration\PFC-LH\g5\' animal '_events.csv'];
 %% Import csv
-opts = delimitedTextImportOptions("NumVariables", 5);
-opts.DataLines = [1, Inf];
-opts.Delimiter = ",";
-opts.VariableNames = ["Date_Time", "amount_consumed", "latency_to_consumption", "Type", "Frame"];
-opts.VariableTypes = ["string", "double", "double", "categorical", "double", ];
-opts = setvaropts(opts, 1, "WhitespaceRule", "preserve");
-opts = setvaropts(opts, [1, 4], "EmptyFieldRule", "auto");
-opts.ExtraColumnsRule = "ignore";
-opts.EmptyLineRule = "read";
-events = readtable(filename, opts);
-clear opts
+ opts = delimitedTextImportOptions("NumVariables", 7);
+ opts.DataLines = [2, Inf];
+ opts.Delimiter = ",";
+ opts.VariableNames = ["Date_Time", "amount_consumed", "latency_to_consumption", "Type", "frame", "hardware_time", "experiment"];
+ opts.VariableTypes = ["string", "double", "double", "categorical", "double", "double", "categorical"];
+ opts = setvaropts(opts, 1, "WhitespaceRule", "preserve");
+ opts = setvaropts(opts, [1, 4], "EmptyFieldRule", "auto");
+ opts.ExtraColumnsRule = "ignore";
+ opts.EmptyLineRule = "read";
+ events = readtable(filename, opts);
+ clear opts
 
 x=datetime(events.(1),'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
 events(find(isnat(x)==1),:)=[];
@@ -34,8 +34,8 @@ x(find(isnat(x)==1))=[];
 event_type=events.(4);
 x=datetime(events.(1),'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
 %% chop
-chop_from=datetime('2022-07-06 08:00:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
-chop_to=datetime('2022-07-12 15:30:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
+chop_from=datetime('2022-09-23 14:37:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');%chop the day
+chop_to=datetime('2022-09-23 20:00:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
 
 x=datetime(events.(1),'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
 events(find(x<chop_from),:)=[];
@@ -55,7 +55,7 @@ u1=find(event_type=='imaging_stop');
 %f_num=events.(3);
 frames =events.(5);
 abc = u1 - 1; 
-imaging_ends=u1(find(frames(u1) ~= 0));%frames were aquired
+imaging_ends=u1(find(frames(u1) > 1 ));%frames were aquired
 
 u2=find(event_type=='imaging_start');
 imaging_starts=[];%accumulator
@@ -63,6 +63,7 @@ for i=1:size(imaging_ends,1)
     u3=u2(find(u2 < imaging_ends(i)));%finds the previous imaging_starts
     imaging_starts=[imaging_starts; u3(end)];%adds the closest imaging start to list
 end
+
 
 %% plot
 x=datetime(events.(1),'Format','yyyy-MM-dd HH:mm:ss.SSS');
@@ -156,6 +157,8 @@ for i=1:size(ends,1)-1 %clean up
         ends(i)=[];
     end
 end
+%%
+b_food_dur=[];
 
 %session_starts
 clear i
@@ -170,6 +173,7 @@ for i=1:size(ends,1) %blocks
     b_trials.w(i)=length(find(event_type_block=='enter_drink'));
     b_trials.total(i)=b_trials.e(i)+b_trials.r(i)+b_trials.f(i)+b_trials.s(i)+b_trials.w(i);
     b_trials.entryrate(i) = (b_trials.total(i)/seconds(b_dur.dur(i)))*60;
+    
     
     
     %high res analyses
@@ -320,7 +324,12 @@ for i=1:size(ends,1) %blocks
 
             end
             b_trial_dur=[b_trial_dur; milliseconds(x(b_trials_total_end(e))-x(b_trials_total(e)))];
-            b_choice_dur=[b_choice_dur; milliseconds(x(b_trials_total(e))-x(b_trials_total_end(e-1)))];
+            b_choice_dur=[b_choice_dur; milliseconds(x(b_trials_total(e))-x(b_trials_total_end(e-1)))];  
+            if find(b_trials_food==b_trials_total(e))%plots duration of food trials
+                b_food_dur=[b_food_dur; milliseconds(x(b_trials_total_end(e))-x(b_trials_total(e)))];
+            end    
+
+
         end
         b_trials.mean_choice_dur(i)=nanmean(b_choice_dur);
         b_trials.mean_trial_dur(i)=nanmean(b_trial_dur);
@@ -385,7 +394,7 @@ end
 
 
 
-%%figures
+%% figures
 
 pod_entries(1, :) = b_trials.e;
 pod_entries(2, :) = b_trials.r;
@@ -396,15 +405,15 @@ pod_entries(6, :) = ends;
 
 
 f2 = figure;
-leg = {'explore', 'run', 'food', 'social', 'water', 'total'};
+leg = {'food'};%{'explore', 'run', 'food', 'social', 'water', 'total'};
 figure(f2);
 xx=x(ends);
-plot(xx,pod_entries(1,:),'MarkerFaceColor','g');hold on;
-plot(xx,pod_entries(2,:),'MarkerFaceColor','m');
+%plot(xx,pod_entries(1,:),'MarkerFaceColor','g');hold on;
+%plot(xx,pod_entries(2,:),'MarkerFaceColor','m');
 plot(xx,pod_entries(3,:),'MarkerFaceColor','y');
-plot(xx,pod_entries(4,:),'MarkerFaceColor','r');
-plot(xx,pod_entries(5,:),'MarkerFaceColor','w');
-plot(xx,b_trials.total,'ko','MarkerFaceColor','k');
+%plot(xx,pod_entries(4,:),'MarkerFaceColor','r');
+%plot(xx,pod_entries(5,:),'MarkerFaceColor','w');
+%plot(xx,b_trials.total,'ko','MarkerFaceColor','k');
 %set(barb,{'FaceColor'},{'g';'m'; 'y';'r'; 'b'});
 legend(leg)
 ylabel('Trials')
@@ -455,8 +464,11 @@ ylabel('mean choice duration');
 f5=figure;
 figure(f5);
 xx=x(ends);
-subplot(size(animals,1),1,a),plot(xx,b_trials.mean_trial_dur,'ko','MarkerFaceColor','k');hold on
-ylabel('mean trial duration');
+xxx=1:39;
+%subplot(size(animals,1),1,a),plot(xx,b_trials.mean_trial_dur,'ko','MarkerFaceColor','k');hold on
+%ylabel('mean trial duration');
+subplot(size(animals,1),1,a),plot(b_food_dur,xxx,'ko','MarkerFaceColor','k');hold on% food trial duration
+xlabel('food trial duration');
 
 
 %% first entry in block
@@ -469,16 +481,16 @@ ylabel('first entry');
 yticks([1  2  3  4  5]);
 
 %% separate
-bsl1_from=datetime('2022-07-06 9:00:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
-switch1_from=datetime('2022-07-07 15:00:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
-bsl2_from=datetime('2022-07-11 9:00:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
-switch2_from=datetime('2022-07-12 9:00:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
+% bsl1_from=datetime('2022-07-06 9:00:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
+% switch1_from=datetime('2022-07-07 15:00:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
+% bsl2_from=datetime('2022-07-11 9:00:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
+% switch2_from=datetime('2022-07-12 9:00:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
 
 
 %maybe just sorting the trials?
 
-bsl_trials = find(b_trials.start_time<)
-switch_trials = 
+%bsl_trials = find(b_trials.start_time<)
+%switch_trials = 
 
 
 

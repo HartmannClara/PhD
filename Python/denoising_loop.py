@@ -25,7 +25,7 @@ plt.rcParams["figure.figsize"] = (10,5)
 # '<dataDir><dataFilePrefix><startingFileNum>.avi'
 
 #%%
-folderpath = "D:/Exp_2_DM_exploration/PFC-LH/g2/1_Raw/"
+folderpath = "F:/Pellet/g2/"
 
 daylist = os.listdir(folderpath)
 for x in daylist:

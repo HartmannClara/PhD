@@ -3,7 +3,7 @@
 close all, clear all
 %animals=table(['94331472'; '328340178184'; '335490249236'; '328340226232']);%
 animals='328340226232';
-'94331472 grin1 female';
+%'94331472 grin1 female';
 f1=figure;
 
 % f4=figure;
@@ -14,7 +14,7 @@ clearvars -except a f1 f2 f3 f4 f5 animals binned b_trials b_dur binned_exp
 % animal=cellstr(table2cell(animals(a,1)));
 animal=animals;
 % filename=['C:\Data\Drivemaze\Drivemaze_imaging_grin1' animal{1, 1} '_events.csv'];
-filename=['C:\Users\cha206\Data\g2\' animal '_events.csv'];
+filename=['C:\Users\cha206\Data\DM\g2\' animal '_events.csv'];
 %% Import csv
 opts = delimitedTextImportOptions("NumVariables", 5);
 opts.DataLines = [1, Inf];
@@ -34,8 +34,8 @@ x(find(isnat(x)==1))=[];
 event_type=events.(4);
 x=datetime(events.(1),'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
 %% chop
-chop_from=datetime('2022-07-06 08:00:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
-chop_to=datetime('2022-07-12 15:30:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
+chop_from=datetime('2022-07-07 08:00:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
+chop_to=datetime('2022-07-07 19:00:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
 
 x=datetime(events.(1),'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
 events(find(x<chop_from),:)=[];
@@ -385,7 +385,7 @@ end
 
 
 
-%%figures
+%% figures
 
 pod_entries(1, :) = b_trials.e;
 pod_entries(2, :) = b_trials.r;
@@ -469,16 +469,16 @@ ylabel('first entry');
 yticks([1  2  3  4  5]);
 
 %% separate
-bsl1_from=datetime('2022-07-06 9:00:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
-switch1_from=datetime('2022-07-07 15:00:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
-bsl2_from=datetime('2022-07-11 9:00:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
-switch2_from=datetime('2022-07-12 9:00:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
+% bsl1_from=datetime('2022-07-06 9:00:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
+% switch1_from=datetime('2022-07-07 15:00:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
+% bsl2_from=datetime('2022-07-11 9:00:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
+% switch2_from=datetime('2022-07-12 9:00:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
 
 
 %maybe just sorting the trials?
 
-bsl_trials = find(b_trials.start_time<)
-switch_trials = 
+%bsl_trials = find(b_trials.start_time<)
+%switch_trials = 
 
 
 

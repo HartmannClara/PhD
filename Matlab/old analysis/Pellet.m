@@ -36,19 +36,19 @@ title('Activity (bg subtracted)')
 %end
 
 
-%df_f_trace = [];
-%for cell_median = 1: size(medians,2) % Loop df/f
-%    v = [];
-%    d = [];
-%    v = medians(:,cell_median);%select column from medians
-%    d = activity_bgr(:,cell_median);%select column from activity_bgr
-%    for f = 1: size(d,1)
-%        a = [];
-%        a =  v(f) ;
-%        b = (d(f) - 0.7*a)/0.7*a;
-%        df_f_trace(f,cell_median) = b;
-%    end
-%end
+df_f_trace = [];
+for cell_median = 1: size(medians,2) % Loop df/f
+   v = [];
+   d = [];
+   v = medians(:,cell_median);%select column from medians
+   d = activity_bgr(:,cell_median);%select column from activity_bgr
+   for f = 1: size(d,1)
+       a = [];
+       a =  v(f) ;
+       b = (d(f) - 0.7*a)/0.7*a;
+       df_f_trace(f,cell_median) = b;
+   end
+end
 
 %figure(f2);
 %stackedplot(df_f_trace)

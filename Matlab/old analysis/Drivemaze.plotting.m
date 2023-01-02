@@ -2,8 +2,8 @@
 %2022March 
 close all, clear all
 %animals=table(['94331472'; '328340178184'; '335490249236']);%
-animals='328340226232';
-'328340226232 grin2 female';
+animals='3354903011';
+'3354903011 grin5 female';
 f1=figure;
 f2=figure;
 f3=figure;
@@ -15,19 +15,32 @@ clearvars -except a f1 f2 f3 f4 f5 animals binned b_trials b_dur binned_exp
 % animal=cellstr(table2cell(animals(a,1)));
 animal=animals;
 % filename=['C:\Data\Drivemaze\Drivemaze_imaging_grin1' animal{1, 1} '_events.csv'];
-filename=['C:\Users\cha206\Data\DM\g2\' animal '_events.csv'];
+filename=['E:\Exp_2_DM_exploration\PFC-LH\g5\' animal '_events.csv'];
+
 %% Import csv
-opts = delimitedTextImportOptions("NumVariables", 4);
-opts.DataLines = [1, Inf];
-opts.Delimiter = ",";
-opts.VariableNames = ["Date_Time", "amount_consumed", "latency_to_consumption", "Type"];
-opts.VariableTypes = ["string", "double", "double", "categorical"];
-opts = setvaropts(opts, 1, "WhitespaceRule", "preserve");
-opts = setvaropts(opts, [1, 4], "EmptyFieldRule", "auto");
-opts.ExtraColumnsRule = "ignore";
-opts.EmptyLineRule = "read";
-events = readtable(filename, opts);
-clear opts
+ opts = delimitedTextImportOptions("NumVariables", 93);
+    opts.DataLines = [2, Inf];
+    opts.Delimiter = ",";
+    cells=23;
+    VariableNames = ["VarName1"];
+    VariableTypes = ["double"];
+    for i = 1:cells
+        newVariableNames= ["Area"+ i , "Mean"+ i, "Min"+ i, "Max"+ i];
+        B = convertStringsToChars(newVariableNames);
+        VariableNames = [VariableNames, B];
+    
+        newVariableTypes = ["double", "double", "double", "double"];
+        C = convertStringsToChars(newVariableTypes);
+        VariableTypes = [VariableTypes, C];
+    end    
+    opts.VariableNames = VariableNames;
+    opts.VariableTypes = VariableTypes;
+    opts.ExtraColumnsRule = "ignore";
+    opts.EmptyLineRule = "read";
+    Results = readtable(filename, opts);
+    Results = table2array(Results);
+    raw_f_res=Results(:,3:4:end);
+    clear opts
 
 x=datetime(events.(1),'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
 events(find(isnat(x)==1),:)=[];
@@ -35,8 +48,8 @@ x(find(isnat(x)==1))=[];
 event_type=events.(4);
 x=datetime(events.(1),'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
 %% chop
-chop_from=datetime('2022-02-08 13:27:40.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
-chop_to=datetime('2022-02-08 14:20:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
+chop_from=datetime('2022-09-27 13:00:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
+chop_to=datetime('2022-09-27 18:00:00.000','InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
 
 x=datetime(events.(1),'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
 events(find(x<chop_from),:)=[];
@@ -47,8 +60,22 @@ events(find(isnat(x)==1),:)=[];
 x(find(isnat(x)==1))=[];
 event_type=events.(4);
 %% cleanup
-
 % find imaging starts
+%u1=find(event_type=='frame');
+u1=find(event_type=='imaging_stop');
+%f_num=events.(3);
+frames =events.(5);
+abc = u1 - 1; 
+imaging_ends=u1(find(frames(u1) > 1 ));%frames were aquired
+
+u2=find(event_type=='imaging_start');
+imaging_starts=[];%accumulator
+for i=1:size(imaging_ends,1)
+    u3=u2(find(u2 < imaging_ends(i)));%finds the previous imaging_starts
+    imaging_starts=[imaging_starts; u3(end)];%adds the closest imaging start to list
+end
+
+
 u1=find(event_type=='frame');
 f_num=events.(3);
 imaging_starts=u1(find(f_num(u1)==1));

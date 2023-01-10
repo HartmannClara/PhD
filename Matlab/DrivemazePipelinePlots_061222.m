@@ -1,10 +1,9 @@
-clearvars -except events_averg ci_data; close all;
+clearvars -except events_averg ci_data_bsl; close all;
 set(0,'defaultAxesFontSize',18);
-
 %%
 fn=fieldnames(events_averg);
 %loop through the fields
-for ii=1: numel(fn)
+for ii=1: numel(fn)-1
     fn1=fieldnames(events_averg.(fn{ii}));
         %for j=16:numel(fn1)
         events_averg.(fn{ii}).ed_averg_bsl_m = nanmean(events_averg.(fn{ii}).(fn1{17}),3);

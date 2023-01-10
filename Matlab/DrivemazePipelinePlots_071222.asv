@@ -1,7 +1,6 @@
 clearvars -except events_averg ci_data; close all;
 set(0,'defaultAxesFontSize',18);
-
-%%
+%% makes an average over all trials per cell
 fn=fieldnames(events_averg);me = {'_m'};
 %loop through the fields to make mean all bsl trials
 for ii=1: numel(fn)
@@ -11,12 +10,14 @@ for ii=1: numel(fn)
         end
 end    
 
-%% concatenating over averg from all cells
+%% concatenating over averg from all cells (all cells together)
 fn1=fieldnames(events_averg.g5);
-    for j=33:numel(fn1)
+    for j=37:numel(fn1)
         events_averg.all.(strrep((fn1{j}), '_averg_bsl_m', '')) = cat(2,events_averg.g5.(fn1{j}),events_averg.g2.(fn1{j}),events_averg.g4.(fn1{j}));
     end    
 events_averg.all.be = events_averg.all.blockend; events_averg.all = rmfield(events_averg.all, "blockend");
+
+
 %% averages around events (gives one value for a specific window around the event to compare to bsl)
 events_averg.all.ed_averg = mean(events_averg.all.ed(15:30,:),1);
 events_averg.all.ef_averg = mean(events_averg.all.ef(15:30,:),1);
@@ -37,6 +38,10 @@ events_averg.all.exe_averg = mean(events_averg.all.exe(15:30,:),1);
 events_averg.all.exr_averg = mean(events_averg.all.exr(15:30,:),1);
 events_averg.all.run_averg = mean(events_averg.all.run(15:30,:),1);
 events_averg.all.expl_averg = mean(events_averg.all.expl(15:30,:),1);
+events_averg.all.ed_averg_nc_m = mean(events_averg.all.ed_averg_bsl_nc_m(15:30,:),1);
+events_averg.all.ed_averg_c_m = mean(events_averg.all.ed_averg_bsl_c_m(15:30,:),1);
+events_averg.all.ef_averg_nc_m = mean(events_averg.all.ef_averg_bsl_nc_m(15:30,:),1);
+events_averg.all.ef_averg_c_m = mean(events_averg.all.ef_averg_bsl_c_m(15:30,:),1);
 
 %% binary
 % std of the population to compare to 
@@ -54,39 +59,39 @@ fact= 1.5; % deciding factor, 1.5 times the standard deviationof the population 
 events=[];
 column= 0;
 fn3 = fieldnames(events_averg.all);
-for hh=17:35
+for hh=21:43
     column= column+1;
     for kk=1:59
-        if ((hh == 17) || (hh ==23) || (hh ==24) || (hh ==29)) & (events_averg.all.(fn3{hh})(1,kk) >= fact*std_ed)
+        if ((hh == 21) || (hh ==27) || (hh ==28) || (hh ==33)|| (hh ==40)|| (hh ==41)) & (events_averg.all.(fn3{hh})(1,kk) >= fact*std_ed)
             events(column,kk) = 1;
             %kk = kk + 1;
-        elseif  ((hh == 17) || (hh ==23) || (hh ==24) || (hh ==29)) & (events_averg.all.(fn3{hh})(1,kk) <= -(fact*std_ed))
+        elseif  ((hh == 21) || (hh ==27) || (hh ==28) || (hh ==33)|| (hh ==40)|| (hh ==41)) & (events_averg.all.(fn3{hh})(1,kk) <= -(fact*std_ed))
                events(column,kk) = 2;
   
-        elseif  ((hh == 18)||(hh == 25)||(hh == 26)||(hh == 30)) & (events_averg.all.(fn3{hh})(1,kk) >= fact*std_ef)
+        elseif  ((hh == 22)||(hh == 29)||(hh == 30)||(hh == 34)|| (hh ==42)|| (hh ==43)) & (events_averg.all.(fn3{hh})(1,kk) >= fact*std_ef)
                events(column,kk) = 1;
-        elseif  ((hh == 18)||(hh == 25)||(hh == 26)||(hh == 30)) & (events_averg.all.(fn3{hh})(1,kk) <= -(fact*std_ef))
+        elseif  ((hh == 22)||(hh == 29)||(hh == 30)||(hh == 34)|| (hh ==42)|| (hh ==43)) & (events_averg.all.(fn3{hh})(1,kk) <= -(fact*std_ef))
                events(column,kk) = 2;    
 
-        elseif ( (hh == 19)||(hh == 20)||(hh == 31)) & (events_averg.all.(fn3{hh})(1,kk) >= fact*std_es)
+        elseif ( (hh == 23)||(hh == 24)||(hh == 35)) & (events_averg.all.(fn3{hh})(1,kk) >= fact*std_es)
                events(column,kk) = 1;
-        elseif  ((hh == 19)||(hh == 20)||(hh == 31)) & (events_averg.all.(fn3{hh})(1,kk) <= -(fact*std_es))
+        elseif ( (hh == 23)||(hh == 24)||(hh == 35)) & (events_averg.all.(fn3{hh})(1,kk) <= -(fact*std_es))
                events(column,kk) = 2; 
 
 
-        elseif  ((hh == 21)||(hh == 32))& (events_averg.all.(fn3{hh})(1,kk) >= fact*std_ee)
+        elseif  ((hh == 25)||(hh == 39)||(hh == 36))& (events_averg.all.(fn3{hh})(1,kk) >= fact*std_ee)
                events(column,kk) = 1;
-        elseif  ((hh == 21)||(hh == 32)) & (events_averg.all.(fn3{hh})(1,kk) <= -(fact*std_ee))
+        elseif  ((hh == 25)||(hh == 39)||(hh == 36)) & (events_averg.all.(fn3{hh})(1,kk) <= -(fact*std_ee))
                events(column,kk) = 2; 
 
-        elseif ( (hh == 22)||(hh == 33)) & (events_averg.all.(fn3{hh})(1,kk) >= fact*std_er)
+        elseif ( (hh == 26)||(hh == 37)) & (events_averg.all.(fn3{hh})(1,kk) >= fact*std_er)
                events(column,kk) = 1;
-        elseif ( (hh == 22)||(hh == 33) ) & (events_averg.all.(fn3{hh})(1,kk) <= -(fact*std_er))
+        elseif ( (hh == 26)||(hh == 37) ) & (events_averg.all.(fn3{hh})(1,kk) <= -(fact*std_er))
                events(column,kk) = 2; 
 
-        elseif ( (hh == 27)||(hh == 28)) & (events_averg.all.(fn3{hh})(1,kk) >= fact*std_be)
+        elseif ( (hh == 31)||(hh == 32)) & (events_averg.all.(fn3{hh})(1,kk) >= fact*std_be)
                events(column,kk) = 1;
-        elseif ( (hh == 27)||(hh == 28))  & (events_averg.all.(fn3{hh})(1,kk) <= -(fact*std_be))
+        elseif ( (hh == 31)||(hh == 32))  & (events_averg.all.(fn3{hh})(1,kk) <= -(fact*std_be))
                events(column,kk) = 2;        
 
         else    
@@ -137,11 +142,10 @@ end
 noEventCells = find((sum(events,1)) == 0);
 specializedCells = find((sum(events,1)) == 1);
 %%compare nr of cells before entry vs consum
-entryCellsEx = unique(cat(1, ed_cells, ef_cells, es_cells, ee_cells, er_cells, be_cells));
-entryCellsInh = unique(cat(1, ed_cells_inh, ef_cells_inh, es_cells_inh, ee_cells_inh, er_cells_inh, be_cells_inh));
-consCellsEx = unique(cat(1, drink_cells, eat_cells, soc_cells, expl_cells, run_cells, home_cells));
-consCellsInh = unique(cat(1, drink_cells_inh, eat_cells_inh, soc_cells_inh, run_cells_inh, home_cells_inh));
-
-y = [size(entryCellsEx) size(entryCellsInh); 2 5 6];
-bar(y,'stacked')
+entryCellsEx = unique(cat(1, ed_cells, ef_cells, es_cells, ee_cells, er_cells, be_cells,ed_cells_inh, ef_cells_inh, es_cells_inh, ee_cells_inh, er_cells_inh, be_cells_inh));
+%entryCellsInh = unique(cat(1, ed_cells_inh, ef_cells_inh, es_cells_inh, ee_cells_inh, er_cells_inh, be_cells_inh));
+consCellsEx = unique(cat(1, drink_cells, eat_cells, soc_cells, expl_cells, run_cells, home_cells, drink_cells_inh, eat_cells_inh, soc_cells_inh, run_cells_inh, home_cells_inh));
+%consCellsInh = unique(cat(1, drink_cells_inh, eat_cells_inh, soc_cells_inh, run_cells_inh, home_cells_inh));
+y = [size(entryCellsEx,1), size(consCellsEx,1)];
+bar(y);xticklabels({'entry cells','consumption cells'});
 

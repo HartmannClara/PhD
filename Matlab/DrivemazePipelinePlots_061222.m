@@ -314,7 +314,7 @@ hh=vennEulerDiagram(setListData2, setLabels2, 'drawProportional', true);
 setListData2={A soc_cells soc_cells_inh es_cells es_cells_inh};
 setLabels2=[ " ";"\fontsize{15}social contact ex 28.8% (17/59)" ; "\fontsize{15}social contact inh 39.0% (23/59)"; "\fontsize{15}enter social ex 25.4% (15/59)";"\fontsize{15}enter social inh 27.1% (16/59)"];
 hh=vennEulerDiagram(setListData2, setLabels2, 'drawProportional', true);
-
+raw
 %% traces
 enter = 1606;
 c40_ed = ci_data.g4.Sep02(4).session.raw_f_res(enter-200:enter+100,4);z_c40 = (c40_ed-nanmean(c40_ed(1:50,1)))/nanstd(c40_ed(1:50,1));

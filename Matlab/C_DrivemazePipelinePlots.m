@@ -591,7 +591,7 @@ NrTrials = array2table(NrTrials,'VariableNames',{'g5','g2','g4'},'RowNames',{'ed
 win= 30;
 lim = [-2 2];
 limaverg = [-0.3 0.5];
-f7=figure;% averages across 2all sessions
+f7=figure;% averages across all sessions
 figure(f7);hold on;
 subplot(2,6,1),imagesc([-win:0],[1:size(events_averg.all.ed,2)],events_averg.all.ed');xline(-20,'--b');
         title(['\fontsize{10}enter drink',' trials: 62-88']);clim(lim);
@@ -727,16 +727,16 @@ subplot(2,4,4),imagesc([-win:0],[1:size(events_averg.all.ef_c,2)],events_averg.a
 %% ethogram plots
 
 %% ethogram plots
-s=5;
+s=7;
 event_type=table2array(ci_data.bsl.g5.d_2022_09_27(s).session.events(:,4));
-raw_f_res =(ci_data.bsl.g5.d_2022_09_27(s).session.raw_f);
-%df_f_trace = dFoF(raw_f_res);%df/f
-%z_scored_raw= zscore(df_f_trace,0,1);
-z_scored_raw= zscore(raw_f_res,0,1);
+raw_f_res =(ci_data.bsl.g5.d_2022_09_27(s).session.raw_f_res);
+df_f_trace = dFoF(raw_f_res);%df/f
+z_scored_raw= zscore(df_f_trace,0,1);
+%z_scored_raw= zscore(raw_f_res,0,1);
 
 x = (table2array(ci_data.bsl.g5.d_2022_09_27(s).session.events(:,5)));
 y=NaN(size(x));
-frameplot=raw_f;
+frameplot=raw_f_res;
 
 
 %y(find(event_type=='block_start'))=2;
@@ -793,7 +793,7 @@ end
 good_cells = [1:23];
 j=0;
 for i=good_cells
-   subplot(1,1,a),plot((z_scored_raw(:,i)/5-j),'Color',[i/size(raw_f,2) 1-i/size(raw_f,2) i/size(raw_f,2)],'LineWidth',1);hold on;
+   subplot(1,1,a),plot((z_scored_raw(:,i)/7-j),'Color',[i/size(raw_f_res,2) 1-i/size(raw_f_res,2) i/size(raw_f_res,2)],'LineWidth',1);hold on;
    j=j+1;
 end
 

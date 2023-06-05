@@ -23,19 +23,24 @@ for ii=1: numel(fn)
         for k=1: numel(fn2)
             for s=1:size(ci_data.bsl.(fn{ii}).(fn1{j}),2)%access the data
                 fn3= fieldnames(ci_data.bsl.(fn{ii}).(fn1{j})(s).(fn2{k}));
-                missed_frames = ci_data.bsl.(fn{ii}).(fn1{j})(s).(fn2{k}).(fn3{3});
+                missed_frames = ci_data.bsl.(fn{ii}).(fn1{j})(s).(fn2{k}).(fn3{4});
                 if numel(missed_frames) >= skipSessionFrames
                     skippedCounter = skippedCounter + 1;
                     fr_skip = {fn(ii), fn1(j), s};
                     FrameSkipped = [FrameSkipped; fr_skip];
                     s = s+1;
                 else
-                new_event_frames= ci_data.bsl.(fn{ii}).(fn1{j})(s).(fn2{k}).(fn3{2}).(5);
-                event_type = ci_data.bsl.(fn{ii}).(fn1{j})(s).(fn2{k}).(fn3{2}).(4);
+                new_event_frames= ci_data.bsl.(fn{ii}).(fn1{j})(s).(fn2{k}).(fn3{3}).(5);
+                event_type = ci_data.bsl.(fn{ii}).(fn1{j})(s).(fn2{k}).(fn3{3}).(4);
                 raw_f_res=ci_data.bsl.(fn{ii}).(fn1{j})(s).(fn2{k}).(fn3{1});
-                df_f_trace = dFoF(raw_f_res);%df/f
+                Fneu = ci_data.bsl.(fn{ii}).(fn1{j})(s).(fn2{k}).(fn3{2});
+                subneuro_trace = subneuro(raw_f_res,Fneu,1); % subtracts neuropil trace from raw trace by factor x subneuro(rawF, Fneuropil, factor)
+                subneuro_trace(:,(size(subneuro_trace,2)+1)) = mean(Fneu,2);%last "cell" is mean neuropil trace
+                
+                df_f_trace = dFoF(subneuro_trace);%df/f
                 raw_f= zscore(df_f_trace,0,1);% zscored using sample sd
 
+        
                 %%
                 win =30;
                 % check if lick sensor is ok, otherwise skip drink snips
@@ -274,6 +279,7 @@ for ii=1: numel(fn)
         end 
     end
 end
+
 
 %% Cons and non consumption trials
 DrinkEntryAll = cell2table(DrinkEntryAll, "VariableNames",["animal" "day" "session" "trial"]); FoodEntryAll = cell2table(FoodEntryAll, "VariableNames",["animal" "day" "session" "trial"]); RunEntryAll = cell2table(RunEntryAll, "VariableNames",["animal" "day" "session" "trial"]);

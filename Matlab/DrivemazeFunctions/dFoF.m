@@ -1,4 +1,4 @@
-function df_f_trace = dFoF(raw_f_res)
+function subneuro_trace = subneuro(raw_f_res,Fneu)
 %UNTITLED11 dFoF
 %   calculates deltaF over F0 with F0 calculated from a moving median (window size 120s)
 %   takes in raw traces and gives out dFoF traces(df_f_trace)
@@ -9,7 +9,7 @@ medians = [];
         medians_cell = movmedian(cell_n, 1200);%window size in frames %120s
         medians = [medians, medians_cell];     
     end
-    df_f_trace = [];
+    subneuro_trace = [];
     for cell_median = 1: size(medians,2) % Loop df/f
        v = [];
        d = [];
@@ -19,7 +19,7 @@ medians = [];
            a = [];
            a =  v(f) ;
            b = (d(f) - 0.7*a)/0.7*a;
-           df_f_trace(f,cell_median) = b;
+           subneuro_trace(f,cell_median) = b;
        end
     end
 end

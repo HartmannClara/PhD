@@ -10,7 +10,7 @@
 
 clearvars -except ci_data;
 %% import data
-animal = 4;cells =23;%CHANGE nr of cells in FOV!!!!!!!!!!
+animal = 5;cells =27;%CHANGE nr of cells in FOV!!!!!!!!!!
 if animal == 2 
     RFID = '328340226232';
 elseif animal == 4

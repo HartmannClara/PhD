@@ -1,4 +1,4 @@
-clearvars -except events_averg events_averg_data events_averg_c1 ci_data perc95 perc5 Perc95 Perc5 Specs; close all;
+clearvars -except ci_data; close all; 
 % Analysis of ci_data file, creates events_averg data file
 % 03/06/2023
 % to do:
@@ -8,12 +8,10 @@ clearvars -except events_averg events_averg_data events_averg_c1 ci_data perc95 
 
 factor = 0.8; % factor by which the neuropil is subtracted 0.7-0.9
 skipSessionFrames = 20; %nr of missed frames when sessions are skipped
-skippedCounter = 0;FrameSkipped = {};DecSkipped = {}; %counts how many sessions are skipped bc nr of missed frames is too high
+skippedCounter = 0;FrameSkipped = {}; %counts how many sessions are skipped bc nr of missed frames is too high
 skipDrink = 0; skippedDrinkTrials = {};% logs nr and id of drink trials skipped bc of faulty sensor
 DrinkEntryNC = {};FoodEntryNC = {};RunEntryNC = {};
-DrinkEntryAll = {};FoodEntryAll = {};RunEntryAll = {};DrinkAll = {};EatAll = {};
-FoodExitAll ={};RunExitAll ={};ExpExitAll ={};SocExitAll ={};DrinkExitAll ={}; ImgStopAll = {};
-
+DrinkEntryAll = {};FoodEntryAll = {};RunEntryAll = {};DrinkAll = {};
 fn=fieldnames(ci_data.bsl);
 %loop through the fields
 for ii=1: numel(fn)
@@ -57,12 +55,9 @@ for ii=1: numel(fn)
                 AllEntries = {ef_events,er_events, ee_events,es_events,ed_events,istarts};AllEntriesList = sort(vertcat(AllEntries{:}));
                 AllExits = {exf_events,exr_events, exe_events,exs_events,exd_events,B_ends}; AllExitsList = sort(vertcat(AllExits{:}));
                 % legth of time in desicion zone
-                AllExitsList = cat(1,AllEntriesList(1,1), AllExitsList(:,1));%add imaging start as first exit
-                AllEntriesList(1) = [];% remove imaging start from entries
+                AllEntriesList(1:2) = [];% remove imaging start and first entry
                 AllEntriesList(end+1,1) =  AllExitsList(end,1);% add block end as last entry into something
                 AllExitsList(end)= [];% remove block end from exits
-
-                clear DecFrames DecTypes 
                 for et=1:size(AllExitsList,1)%event type
                     DecFrames(et,1) =  (new_event_frames(AllEntriesList(et)) - new_event_frames(AllExitsList(et)))/10;% check frames from exit to next entry
                     DecTypes(et,1) = event_type(AllExitsList(et)); % save what came before and what after
@@ -71,16 +66,13 @@ for ii=1: numel(fn)
                 %check if there is less than 1.8s between desicions = error
                 err = find(DecFrames < 1.8);
                 if err ~= 0 
-                   skippedCounter = skippedCounter + 1;
-                   dec_skip = {fn(ii), fn1(j), s};
-                   DecSkipped = [DecSkipped; dec_skip];
+                   skippedCounter = skippedCounter + 1; 
                    s = s+1;% if there is an error skip the session
                 else
-                    Desicion = {DecFrames, DecTypes, s};% seconds in desicion time and identidy of previous and next entry
+                    Desicion = {DecFrames, DecTypes};% seconds in desicion time and identidy of previous and next entry
                     DecSpecs = [DecSpecs; Desicion];% Decision zone: time, exit to entry types
-                
+                end
                 %check how long the entries are
-                clear PodFrames PodTimes
                 for et=1:size(AllEntries,2)%event type (ef er ee es ed imaging starts)
                    NrEt = AllEntries{1,et};
                    NrEx = AllExits{1,et};
@@ -90,7 +82,7 @@ for ii=1: numel(fn)
                    end
                    PodTimes{1,et} = PodFrames;% time in pod (ef er ee es ed session length)
                 end
-                TimeSpecs = [TimeSpecs; PodTimes];%pod times: food, run, explore, social,drink, whole block
+                TimeSpecs = [TimeSpecs; PodTimes];%pod times: food, run, drink, explore, social, whole block
 
                 %%
                 % check if lick sensor is ok, otherwise skip drink snips
@@ -100,8 +92,7 @@ for ii=1: numel(fn)
                 if size(ed_d_frames,1) == size(unique(ed_d_frames),1)
                     pp = 1:15;
                 elseif size(ed_d_frames,1) > size(unique(ed_d_frames),1)
-                    %pp = [2:5 7:15]; skipDrink = skipDrink +1;% skips drink and entry drink!!! snips
-                    pp = [1:5 7:15];
+                    pp = [2:5 7:15]; skipDrink = skipDrink +1;% skips drink and entry drink!!! snips
                     skipped = {fn(ii), fn1(j), s};
                     skippedDrinkTrials = [skippedDrinkTrials; skipped];
                 end   
@@ -169,16 +160,9 @@ for ii=1: numel(fn)
                     else
                         win = 30;% event window
                         fte = 25; %frames to entry/exit; how long it takes an animal to go from door to entry beam
-                        
-%%%%%%%%%%%%%%%%%%increase nr of trigs for chance baseline
-                        trigs = sort(cat(1,trigs));
-                        eventNr = sort(cat(1,eventNr));
 
                         for i=1:size(trigs,1)%loop through the events of type t
                             trig=trigs(i);
-%%%%%%%%%%%%%%%%%% for chance triggers
-                            randomNumber = 0.1 + (0.9-0.1) * rand;
-                            trig = round(trig*randomNumber);
                             evnt = eventNr(i);
                             
                                 if trig>win + fte + 1 & p==1 & event_type(evnt+1) == "drink" %% only if there are enough frames before trig
@@ -225,7 +209,7 @@ for ii=1: numel(fn)
                                     es_averg=cat(3,es_averg,snips(:,:,i));
                                     es_averg_bsl=cat(3,es_averg_bsl,snips_bslined(:,:,i));
                     
-                                    snips2(:,:,i)=raw_f(trig-10:trig+win,:); %social interact, takes 3s after beam break and 1s before
+                                    snips2(:,:,i)=raw_f(trig:trig+win,:); %social interact, takes 3s after beam break 
                                     entry_soc_bsl = mean(snips(20:30,:,i),1);%baselined to 1 sec bf entry beam break
                                     snips_bslined2(:,:,i)=snips2(:,:,i)-entry_soc_bsl;
                                     soc_averg=cat(3,soc_averg,snips2(:,:,i));
@@ -238,7 +222,7 @@ for ii=1: numel(fn)
                                     ee_averg=cat(3,ee_averg,snips(:,:,i));
                                     ee_averg_bsl=cat(3,ee_averg_bsl,snips_bslined(:,:,i));
 
-                                    snips2(:,:,i)=raw_f(trig-10:trig+win,:); %explore activity, takes 3s after beam break
+                                    snips2(:,:,i)=raw_f(trig:trig+win,:); %explore activity, takes 3s after beam break
                                     entry_expl_bsl = mean(snips(20:30,:,i),1);%baselined to 1 sec bf entry beam break
                                     snips_bslined2(:,:,i)=snips2(:,:,i)-entry_expl_bsl;
                                     expl_averg=cat(3,expl_averg,snips2(:,:,i));
@@ -275,9 +259,6 @@ for ii=1: numel(fn)
                                     snips_bslined(:,:,i)=snips(:,:,i)-f_bsl;
                                     eat_averg=cat(3,eat_averg,snips(:,:,i));
                                     eat_averg_bsl=cat(3,eat_averg_bsl,snips_bslined(:,:,i));
-                                    e_all = {fn(ii), fn1(j), s, i};
-                                    EatAll = [EatAll; e_all];
-
                                 elseif trig>win+1 & p==8 %blockend
                                     snips(:,:,i)=raw_f(trig-win:trig+100,:);%blockend  from -30 to 100 frames bf/after blockend 13s, be at 31frames
                                     be_bsl = mean(snips(1:10,:,i),1);%baselined to 2 seconds before be
@@ -287,52 +268,40 @@ for ii=1: numel(fn)
 %% exits
                                    
                                 elseif trig>win+1 & p==9%exit drink
-                                    snips(:,:,i)=raw_f(trig-win:trig+win,:); %maybe its more interesting what happens after the door is crossed (3s before beam ) and when animal is in center(+win)
+                                    snips(:,:,i)=raw_f(trig-win:trig+win,:); %maybe its more interesting what happens after the door is crossed (30s before beam ) and when animal is in center(+win)
                                     exd_bsl = mean(snips(1:10,:,i),1);
                                     snips_bslined(:,:,i)=snips(:,:,i)-exd_bsl;
                                     exd_averg=cat(3,exd_averg,snips(:,:,i));
                                     exd_averg_bsl=cat(3,exd_averg_bsl,snips_bslined(:,:,i));
-                                    exd_all = {fn(ii), fn1(j), s, i};
-                                    DrinkExitAll = [DrinkExitAll; exd_all];
                                 elseif trig>win+1 & p==10
                                     snips(:,:,i)=raw_f(trig-win:trig+win,:); %exit food
                                     exf_bsl = mean(snips(1:10,:,i),1);
                                     snips_bslined(:,:,i)=snips(:,:,i)-exf_bsl;
                                     exf_averg=cat(3,exf_averg,snips(:,:,i));
                                     exf_averg_bsl=cat(3,exf_averg_bsl,snips_bslined(:,:,i));
-                                    exf_all = {fn(ii), fn1(j), s, i};
-                                    FoodExitAll = [FoodExitAll; exf_all];
                                 elseif trig>win+1 & p==11
                                     snips(:,:,i)=raw_f(trig-win:trig+win,:); %exit social
                                     exs_bsl = mean(snips(1:10,:,i),1);
                                     snips_bslined(:,:,i)=snips(:,:,i)-exs_bsl;
                                     exs_averg=cat(3,exs_averg,snips(:,:,i));
                                     exs_averg_bsl=cat(3,exs_averg_bsl,snips_bslined(:,:,i));
-                                    exs_all = {fn(ii), fn1(j), s, i};
-                                    SocExitAll = [SocExitAll; exs_all];
                                 elseif trig>win+1 & p==12
                                     snips(:,:,i)=raw_f(trig-win:trig+win,:); %exit explore
                                     exe_bsl = mean(snips(1:10,:,i),1);
                                     snips_bslined(:,:,i)=snips(:,:,i)-exe_bsl;
                                     exe_averg=cat(3,exe_averg,snips(:,:,i));
                                     exe_averg_bsl=cat(3,exe_averg_bsl,snips_bslined(:,:,i));
-                                    exe_all = {fn(ii), fn1(j), s, i};
-                                    ExpExitAll = [ExpExitAll; exe_all];
                                 elseif trig>win+1 & p==13
                                     snips(:,:,i)=raw_f(trig-win:trig+win,:); %exit run
                                     exr_bsl = mean(snips(1:10,:,i),1);
                                     snips_bslined(:,:,i)=snips(:,:,i)-exr_bsl;
                                     exr_averg=cat(3,exr_averg,snips(:,:,i));
                                     exr_averg_bsl=cat(3,exr_averg_bsl,snips_bslined(:,:,i));
-                                    exr_all = {fn(ii), fn1(j), s, i};
-                                    RunExitAll = [RunExitAll; exr_all];
                                 elseif trig>win+1 & p==14 & trig<= size(raw_f,1)%imaging stop 
                                     snips(:,:,i)=raw_f(trig-win:trig,:);
                                     snips_bslined(:,:,i)=snips(:,:,i)-be_bsl;
                                     imstop_averg=cat(3,imstop_averg,snips(:,:,i));
                                     imstop_averg_bsl=cat(3,imstop_averg_bsl,snips_bslined(:,:,i));
-                                    is_all = {fn(ii), fn1(j), s, i};
-                                    ImgStopAll = [ImgStopAll; is_all];
                                 elseif trig>win+1 & p==15 %run
                                     snips(:,:,i)=raw_f(trig-win:trig+win,:); % run
                                     r_bsl = mean(snips(1:10,:,i),1);%bsl 2s before run
@@ -342,8 +311,7 @@ for ii=1: numel(fn)
                                            
                                 end                        
                             end
-                    end 
-                end
+                        end  
                 end
                 end
             end    
@@ -396,11 +364,6 @@ end
 
 %%
 
-% if events_averg entries and consumptions dont line up it is because the
-% enty is the first of a block and there is no 3 full seconds prior to entry
-% window
-%Specs.Times = {'food' 'run' 'explore' 'social' 'drink' 'whole block'};
-%Specs.FoodExitAll = FoodExitAll;Specs.RunExitAll = RunExitAll;Specs.ExpExitAll = ExpExitAll;Specs.SocExitAll = SocExitAll;
-%Specs.DrinkExitAll = DrinkExitAll;Specs.ImgStopAll =ImgStopAll;
-%save("events_averg_s2p.mat", "events_averg");
-%save("Specs.mat", "Specs");
+
+save("events_averg_s2p.mat", "events_averg");
+

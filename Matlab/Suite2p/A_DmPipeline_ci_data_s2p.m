@@ -1,5 +1,5 @@
 % Drivemaze pipeline 
-% only analysis, creates missed frame corrected data in ci_data struct
+% only sorting and cleaning, creates missed frame corrected data in ci_data struct
 % sorted by animal, day, session
 %30.11.2022
 

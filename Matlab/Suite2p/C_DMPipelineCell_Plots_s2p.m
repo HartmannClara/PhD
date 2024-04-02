@@ -1,146 +1,143 @@
-clearvars -except events_averg events_averg_shuf ci_data perc95 perc5 Perc95 Perc5; close all;
+clearvars -except events_averg events_averg_data events_averg_ch ci_data perc95 perc5 Perc95 Perc5 Specs; close all;
 set(0,'defaultAxesFontSize',14);
-
+%% Plotting pipeline 
+load("events_averg_s2p.mat");
 fn=fieldnames(events_averg);
-%% separate average neuropil trace out 
-fn=fieldnames(events_averg);me = {'_NP'};
-%loop through the fields to make mean all bsl trials
-for ii=1: numel(fn)
-    fn1=fieldnames(events_averg.(fn{ii}));
-        for j=20:numel(fn1)
-            EV = events_averg.(fn{ii}).(fn1{j});
-            if isempty(EV) ~= true
-               events_averg.(fn{ii}).(char(strcat(fn1{j},me)))= EV(:,end,:); %collect traces of last cell == mean neuropil signal of all cells
-            else    
-               events_averg.(fn{ii}).(char(strcat(fn1{j},me))) = [];
+% make new classification list for exits according to next entries and time
+fnS = fieldnames(Specs);
+for ii = 1:4
+    exf_entry =[];exr_entry =[];exe_entry =[];exs_entry =[];exd_entry =[];
+    exf_time = [];exr_time = [];exe_time = [];exs_time = [];exd_time = [];
+    for j = 1: size(Specs.(fnS{ii}).DecTimes,1)
+        exits = Specs.(fnS{ii}).DecTimes{j,2}(:,1);
+        for jj = 1:numel(exits)
+            nextEntry = []; TimeinD = [];
+            exit = exits(jj);
+            if  exit == "exit_feed"
+                nextEntry = Specs.(fnS{ii}).DecTimes{j,2}(jj,2);
+                TimeinD = Specs.(fnS{ii}).DecTimes{j,1}(jj,1);
+                exf_entry =[exf_entry nextEntry];
+                exf_time =[exf_time TimeinD];
+                
+            elseif  exit == "exit_run" 
+                nextEntry = Specs.(fnS{ii}).DecTimes{j,2}(jj,2);
+                TimeinD = Specs.(fnS{ii}).DecTimes{j,1}(jj,1);
+                exr_entry =[exr_entry nextEntry];
+                exr_time =[exr_time TimeinD];
+
+            elseif  exit == "exit_explore"
+                nextEntry = Specs.(fnS{ii}).DecTimes{j,2}(jj,2);
+                TimeinD = Specs.(fnS{ii}).DecTimes{j,1}(jj,1);
+                exe_entry =[exe_entry nextEntry];
+                exe_time =[exe_time TimeinD];
+
+            elseif  exit == "exit_social"
+                nextEntry = Specs.(fnS{ii}).DecTimes{j,2}(jj,2);
+                TimeinD = Specs.(fnS{ii}).DecTimes{j,1}(jj,1);
+                exs_entry =[exs_entry nextEntry];
+                exs_time =[exs_time TimeinD];
+
+            elseif  exit == "exit_drink"
+                nextEntry = Specs.(fnS{ii}).DecTimes{j,2}(jj,2);
+                TimeinD = Specs.(fnS{ii}).DecTimes{j,1}(jj,1);
+                exd_entry =[exd_entry nextEntry];
+                exd_time =[exd_time TimeinD];
+
             end
         end
-end   
-%remove neuropil from cells
-for ii=1: numel(fn)
-    fn1=fieldnames(events_averg.(fn{ii}));
-        for j=1:38
-            EV = events_averg.(fn{ii}).(fn1{j});
-            if isempty(EV) ~= true
-               events_averg.(fn{ii}).(fn1{j})= EV(:,1:end-1,:); %all cells but last one
-            else    
-               j=j+1;
-            end
-        end
-end   
-save("events_NPsort_s2p_.mat", "events_averg");
+    end
+    Specs.(fnS{ii}).ExitsSort.exf_entry =exf_entry';Specs.(fnS{ii}).ExitsSort.exf_time =exf_time';
+    Specs.(fnS{ii}).ExitsSort.exr_entry =exr_entry';Specs.(fnS{ii}).ExitsSort.exr_time =exr_time';
+    Specs.(fnS{ii}).ExitsSort.exe_entry =exe_entry';Specs.(fnS{ii}).ExitsSort.exe_time =exe_time';
+    Specs.(fnS{ii}).ExitsSort.exs_entry =exs_entry';Specs.(fnS{ii}).ExitsSort.exs_time =exs_time';
+    Specs.(fnS{ii}).ExitsSort.exd_entry =exd_entry';Specs.(fnS{ii}).ExitsSort.exd_time =exd_time;
+end    
+
+% now I am only interested in the exits which are long enough to not be
+% included in the next entry window -> Deciscion time > 6s (3s enty window
+% and 3s exit window, no overlap)
+% fnE=fieldnames(events_averg.g5);
+% remF = [1:27 34:38];
+% EventExits = events_averg.g5; EventExits = rmfield(EventExits,fnE(remF));
+% exfSnips=[];exrSnips=[];exeSnips=[];exsSnips=[];exdSnips=[];beSnips=[];
+% for ii = 1:size(EventExits.exf_averg_bsl,3)
+%     snip = EventExits.exf_averg_bsl(:,:,ii);
+%     if Specs.g5.ExitsSort.exf_entry(ii,1) == "enter_food"
+%         exfSnips = [exfSnips snip];
+%     elseif Specs.g5.ExitsSort.exf_entry(ii,1) == "enter_run"
+%         exrSnips = [exrSnips snip];
+%     elseif Specs.g5.ExitsSort.exf_entry(ii,1) == "enter_explore"
+%         exeSnips = [exeSnips snip];
+%     elseif Specs.g5.ExitsSort.exf_entry(ii,1) == "enter_social"
+%         exsSnips = [exsSnips snip];
+%     elseif Specs.g5.ExitsSort.exf_entry(ii,1) == "enter_drink"
+%         exdSnips = [exdSnips snip];
+%     elseif Specs.g5.ExitsSort.exf_entry(ii,1) == "imaging_stop"
+%         beSnips = [beSnips snip];    
+%     end
+% end    
+% 
+
+
+%% separating out the neuropil trace
+% % separate average neuropil trace out 
+% fn=fieldnames(events_averg);me = {'_NP'};
+% %loop through the fields to make mean all bsl trials
+% for ii=1: numel(fn)
+%     fn1=fieldnames(events_averg.(fn{ii}));
+%         for j=20:numel(fn1)
+%             EV = events_averg.(fn{ii}).(fn1{j});
+%             if isempty(EV) ~= true
+%                events_averg.(fn{ii}).(char(strcat(fn1{j},me)))= EV(:,end,:); %collect traces of last cell == mean neuropil signal of all cells
+%             else    
+%                events_averg.(fn{ii}).(char(strcat(fn1{j},me))) = [];
+%             end
+%         end
+% end   
+% %remove neuropil from cells
+% for ii=1: numel(fn)
+%     fn1=fieldnames(events_averg.(fn{ii}));
+%         for j=1:38
+%             EV = events_averg.(fn{ii}).(fn1{j});
+%             if isempty(EV) ~= true
+%                events_averg.(fn{ii}).(fn1{j})= EV(:,1:end-1,:); %all cells but last one
+%             else    
+%                j=j+1;
+%             end
+%         end
+% end   
+% save("events_NPsort_s2p_.mat", "events_averg");
 %% plotting neuropil traces during eating
 
-fnEA = fieldnames(events_averg);
-anim = 4;
-fnEAan = fieldnames(events_averg.(fnEA{anim}));
-fnEAanimal = fnEAan(20:38,1);% baselined individual traces
-fnEAanimalNP = fnEAan(39:end,1);
-Event = 8; CellID =17;
-%
-Cell1 = events_averg.(fnEA{anim}).(fnEAanimal{Event})(:,CellID,:);
-C1 = reshape(Cell1 ,[],size(Cell1,3));
-%NP
-Cell1NP = events_averg.(fnEA{anim}).(fnEAanimalNP{Event});
-C1NP = reshape(Cell1NP ,[],size(Cell1NP,3));
-%entry
-%figure; plot(C1, LineWidth=1);hold on; plot((mean(C1,2)),'k' ,LineWidth=4);
-%xticks([1 11 21 31]);xticklabels({'-3','-2','-1', '0'});xlabel('\fontsize{12}time from event[s]');xlim([1 31]);
-%ylabel('\fontsize{12}Ca-activity (z-scored, s.d.)');%title(['\fontsize{10}entry drink inhibited cell']);
-
-%cons
-figure; plot(C1, LineWidth=1);hold on; plot((mean(C1,2)),'k' ,LineWidth=4);
-xticks([1 11 21 31 41 51 61]);xticklabels({'-3','-2','-1', '0', '1', '2', '3'});xlabel('\fontsize{12}time from event[s]');xlim([1 61]);
-ylabel('\fontsize{12}Ca-activity (z-scored, s.d.)');title(['\fontsize{10} Cell']);
-
-%figure; plot(C1NP, LineWidth=1);hold on; plot((mean(C1NP,2)),'k' ,LineWidth=4);
-%xticks([1 11 21 31 41 51 61]);xticklabels({'-3','-2','-1', '0', '1', '2', '3'});xlabel('\fontsize{12}time from event[s]');xlim([1 61]);
-%ylabel('\fontsize{12}Ca-activity (z-scored, s.d.)');title(['\fontsize{10} Neuropil']);
-
-
-%% ethogram plots
-s=2;
-event_type=table2array(ci_data.bsl.g12.d_2023_03_01(s).session.events(:,4));
-raw_f_res =(ci_data.bsl.g12.d_2023_03_01(s).session.raw_f_res);
-subneuro_trace = subneuro(raw_f_res,Fneu,factor); % subtracts neuropil trace from raw trace by factor x subneuro(rawF, Fneuropil, factor)
-subneuro_trace(:,(size(subneuro_trace,2)+1)) = mean(Fneu,2);%last "cell" is mean neuropil trace
-df_f_trace = dFoF(subneuro_trace);%df/f
-raw_f= zscore(df_f_trace,0,1);% zscored using sample sd
-
-x = (table2array(ci_data.bsl.g5.d_2022_09_27(s).session.events(:,5)));
-y=NaN(size(x));
-frameplot=raw_f_res;
-
-
-%y(find(event_type=='block_start'))=2;
-y(find(event_type=='imaging_start'))=2.5; 
-y(find(event_type=='imaging_stop'))=2;
-y(find(event_type=='enter_feed'))=4; %food entry
-y(find(event_type=='enter_run'))=3; %wheel entry
-y(find(event_type=='enter_social'))=4.5; %
-y(find(event_type=='enter_drink'))=2.5; %
-y(find(event_type=='enter_explore'))=5; 
-%consume
-y(find(event_type=='retrieve_pellet'))=4;%pellet retrieval
-y(find(event_type=='drink'))=2.5; %
-y(find(event_type=='run'))=3; %wheel entry
-pel=x(find(event_type=='retrieve_pellet'));
-drink=x(find(event_type=='drink'));
-run=x(find(event_type=='run'));
-%exit
-y(find(event_type=='block_end'))=2.5;
-y(find(event_type=='imaging_stop'))=2;
-y(find(event_type=='exit_feed'))=3.5;
-y(find(event_type=='exit_drink'))=3.5;
-y(find(event_type=='exit_run'))=3.5;
-y(find(event_type=='exit_social'))=3.5;
-y(find(event_type=='exit_explore'))=3.5;
-
-
-yy=fillmissing(y,'linear');
-
-figure;a=1;
-subplot(1,1,a),plot([x(1) x(end)],[3.5 3.5],'b');hold on%decisionpoint
-subplot(1,1,a),plot([x(1) x(end)],[2 2],'b');%nest
-
-subplot(1,1,a),plot(x,yy,'k');hold on
-subplot(1,1,a),plot(x,y,'ko');hold on
-
-
-%title(animal);
-yticks([0.5 1.5 2 2.5 3 3.5 4 4.5 5]);
-yticklabels({'frames','frames','nest','drink','run','decision point','food','social','explore'});
-ylabel('area');
-ylim([-40 5.5]);
-
-for i=1:1:length(pel)
-    subplot(1,1,a),plot([pel(i) pel(i)],[3.8 4.2],'y','LineWidth',3);
-end
-for i=1:1:length(drink)
-    subplot(1,1,a),plot([drink(i) drink(i)],[2.4 2.8],'c','LineWidth',3);
-end
-for i=1:1:length(run)
-    subplot(1,1,a),plot([run(i) run(i)],[2.8 3.2],'m','LineWidth',3);
-end
-
-good_cells = [1:23];
-j=0;
-for i=good_cells
-   subplot(1,1,a),plot((z_scored_raw(:,i)/7-j),'Color',[i/size(raw_f_res,2) 1-i/size(raw_f_res,2) i/size(raw_f_res,2)],'LineWidth',1);hold on;
-   j=j+1;
-end
-
-
-
-
-
-
-
-
-
+% fnEA = fieldnames(events_averg);
+% anim = 4;
+% fnEAan = fieldnames(events_averg.(fnEA{anim}));
+% fnEAanimal = fnEAan(20:38,1);% baselined individual traces
+% fnEAanimalNP = fnEAan(39:end,1);
+% Event = 8; CellID =17;
+% %
+% Cell1 = events_averg.(fnEA{anim}).(fnEAanimal{Event})(:,CellID,:);
+% C1 = reshape(Cell1 ,[],size(Cell1,3));
+% %NP
+% Cell1NP = events_averg.(fnEA{anim}).(fnEAanimalNP{Event});
+% C1NP = reshape(Cell1NP ,[],size(Cell1NP,3));
+% %entry
+% %figure; plot(C1, LineWidth=1);hold on; plot((mean(C1,2)),'k' ,LineWidth=4);
+% %xticks([1 11 21 31]);xticklabels({'-3','-2','-1', '0'});xlabel('\fontsize{12}time from event[s]');xlim([1 31]);
+% %ylabel('\fontsize{12}Ca-activity (z-scored, s.d.)');%title(['\fontsize{10}entry drink inhibited cell']);
+% 
+% %cons
+% figure; plot(C1, LineWidth=1);hold on; plot((mean(C1,2)),'k' ,LineWidth=4);
+% xticks([1 11 21 31 41 51 61]);xticklabels({'-3','-2','-1', '0', '1', '2', '3'});xlabel('\fontsize{12}time from event[s]');xlim([1 61]);
+% ylabel('\fontsize{12}Ca-activity (z-scored, s.d.)');title(['\fontsize{10} Cell']);
+% 
+% %figure; plot(C1NP, LineWidth=1);hold on; plot((mean(C1NP,2)),'k' ,LineWidth=4);
+% %xticks([1 11 21 31 41 51 61]);xticklabels({'-3','-2','-1', '0', '1', '2', '3'});xlabel('\fontsize{12}time from event[s]');xlim([1 61]);
+% %ylabel('\fontsize{12}Ca-activity (z-scored, s.d.)');title(['\fontsize{10} Neuropil']);
 
 %% get cell numbers for each animal
-for ii=1: numel(fn)
+fn=fieldnames(events_averg);
+for ii=1: 4
     fn1=fieldnames(events_averg.(fn{ii}));
         for j=1:19
         Cellnumbers(j, ii) = size(events_averg.(fn{ii}).(fn1{j}),2);
@@ -149,7 +146,7 @@ end
 Rownames = {(fn1(1:19))};
 Cellnumbers = array2table(Cellnumbers,'VariableNames',{'g5','g4','g2','g12'},'RowNames',Rownames{1,1});% How many trials there are of every event typer per animal
 %% get trial numbers for each animal
-for ii=1: numel(fn)
+for ii=1: 4
     fn1=fieldnames(events_averg.(fn{ii}));
         for j=1:19
         Trialnumbers(j, ii) = size(events_averg.(fn{ii}).(fn1{j}),3);
@@ -171,36 +168,46 @@ for ii=1: numel(fn)
 end  
 %% concatenating over averg from all cells (all cells together)
 fn1=fieldnames(events_averg.g5);
-    for j=39:numel(fn1)
-        events_averg.all.(strrep((fn1{j}), '_averg_bsl_m', '')) = cat(2,events_averg.g5.(fn1{j}),events_averg.g4.(fn1{j}),events_averg.g6.(fn1{j}),events_averg.g12.(fn1{j}));
-
-    end    
+    for j=39:54
+        events_averg.all.(strrep((fn1{j}), '_averg_bsl_m', '')) = cat(2,events_averg.g5.(fn1{j}),events_averg.g4.(fn1{j}),events_averg.g2.(fn1{j}),events_averg.g12.(fn1{j}));
+    end
+    for j=55:numel(fn1)
+        events_averg.all.(strrep((fn1{j}), '_averg_nc_bsl_m', '_nc')) = cat(2,events_averg.g5.(fn1{j}),events_averg.g4.(fn1{j}),events_averg.g2.(fn1{j}),events_averg.g12.(fn1{j}));
+    end
+% rename blockend to be!!!!!!!!!!!!!! 
 events_averg.all.be = events_averg.all.blockend;
-
-
+fna= fieldnames(events_averg.all);
+newAllorder = [1:8 20 10:19];
+for i = 1:numel(newAllorder)
+    NewAll.(fna{newAllorder(i)}) = events_averg.all.(fna{newAllorder(i)});
+end    
+events_averg.all = NewAll;
 
 %% averages around events (gives one value for a specific window around the event to compare to bsl)
 fn1=fieldnames(events_averg.all);mel = {'_averg'};
     for j=1:numel(fn1)
-        meanV =mean(events_averg.all.(fn1{j})(15:30,:),1); %15:30 
+        meanV =mean(events_averg.all.(fn1{j})(16:30,:),1); %16:30 
         events_averg.all.(char(strcat(fn1{j},mel))) = meanV;
     end 
 % averages with different event windows
-events_averg.all.soc_averg = mean(events_averg.all.soc(10:25,:),1);%10:25
-events_averg.all.drink_averg = mean(events_averg.all.drink(30:45,:),1);%30:45
-events_averg.all.eat_averg = mean(events_averg.all.eat(30:45,:),1);%30:45
-events_averg.all.home_averg = mean(events_averg.all.be(30:90,:),1);%30:90
-events_averg.all.expl_averg = mean(events_averg.all.expl(10:25,:),1);%10:25
-events_averg.all.drink_antic_averg = mean(events_averg.all.drink(14:29,:),1);%
-events_averg.all.eat_antic_averg = mean(events_averg.all.eat(14:29,:),1);%
+events_averg.all.soc_averg = mean(events_averg.all.soc(20:35,:),1);%20:35
+events_averg.all.drink_averg = mean(events_averg.all.drink(31:45,:),1);%31:45
+events_averg.all.eat_averg = mean(events_averg.all.eat(31:45,:),1);%30:45
+events_averg.all.run_averg = mean(events_averg.all.run(31:45,:),1);%31:45
+events_averg.all.home_averg = mean(events_averg.all.be(30:89,:),1);%30:89
+events_averg.all.expl_averg = mean(events_averg.all.expl(20:35,:),1);%20:35
+events_averg.all.drink_antic_averg = mean(events_averg.all.drink(16:30,:),1);%16:30
+events_averg.all.eat_antic_averg = mean(events_averg.all.eat(16:30,:),1);%16:30
 
-events_averg.all = rmfield(events_averg.all, "blockend_averg");
-events_averg.all = rmfield(events_averg.all, "run_averg");
+%events_averg.all = rmfield(events_averg.all, "run_averg");
 
-events_averg.all = rmfield(events_averg.all, "ed_nc_averg");
-events_averg.all = rmfield(events_averg.all, "ed_c_averg");
-events_averg.all = rmfield(events_averg.all, "ef_nc_averg");
-events_averg.all = rmfield(events_averg.all, "ef_c_averg");
+% add missing cells to events with missing trials
+ze49=zeros(1,49);
+ze54=zeros(1,54);
+events_averg.all.er_averg = cat(2,ze49, events_averg.all.er_averg);
+events_averg.all.run_averg = cat(2,ze49, events_averg.all.run_averg);
+events_averg.all.ed_nc_averg = cat(2,ze49, events_averg.all.ed_nc_averg,ze54);
+
 
 %% binary
 % std of the population to compare to 
@@ -211,80 +218,110 @@ events_averg.all = rmfield(events_averg.all, "ef_c_averg");
 % std_er = std(events_averg.all.er(1:10,:), 1);
 % std_be = std(events_averg.all.be(1:10,:), 1);
 
-%fact= 5; % deciding factor, X times the standard deviation of the population in the baseline window
-% modify perc files so they match data 
 
-%remove blockend, arrays dont match otherwise
-perc95=perc95([1:8 10:19],:); Perc95=Perc95([1:8 10:19],:);
-perc5=perc5([1:8 10:19],:); Perc5=Perc5([1:8 10:19],:);
+% modify order of data files so they match Perc files
+fn1=fieldnames(events_averg.all);
+fn= fn1(20:41);
+fn3 = cat(1,fn(1:5), fn(7:8), fn(10:14),fn(16),fn(18:19),fn(9),fn(20:22),fn(6),fn(15));
+for i = 1:numel(fn3)
+    events_averg.allSort.(fn3{i})= events_averg.all.(fn3{i});
+end    
 
+
+fnallSort = fieldnames(events_averg.allSort);
 
 % compare to shuffled thresholds
+perc95 = table2array(Perc95);
+perc5 = table2array(Perc5);
+
+fn3 = fieldnames(events_averg.allSort);fact=2;
 events=[];
 column= 0;
-fn3 = fieldnames(events_averg.all);start= 21;
-for hh=22:39
+for hh=1:(numel(fn3))
     column= column+1;
-    for kk=1:59
-        if events_averg.all.(fn3{hh})(1,kk) > perc95(hh-start,kk)
+    for kk=1:115
+        if events_averg.allSort.(fn3{hh})(1,kk) == 0 %if trial does not exist, dont mark as cell
+            events(column,kk) = 3;
+        elseif events_averg.allSort.(fn3{hh})(1,kk) > (perc95(hh,kk)*fact)
             events(column,kk) = 1;
-        elseif events_averg.all.(fn3{hh})(1,kk) < perc5(hh-start,kk)  
+        elseif events_averg.allSort.(fn3{hh})(1,kk) < (perc5(hh,kk)*fact) 
             events(column,kk) = 2;
-        else    
+        elseif events_averg.allSort.(fn3{hh})(1,kk) ~= 0  % if its anything else but exact 0 (no trials)   
             events(column,kk) = 0;
         end
     end
 end
 
-
-
 [r,c]=find(events==1);%finds ones excited cells
 [r2,c2]=find(events ==2);%finds 2 inhibited cells
 
-fn3 = fieldnames(events_averg.all);
-fn4 = fn3(22:39,1);
+fn4 = fieldnames(events_averg.allSort);
 for ev = 1:numel(fn4)
     events_averg.cells.(char(strrep((fn4{ev}), '_averg', '_cells'))) = c(find(r==ev));
     events_averg.cells.(char(strrep((fn4{ev}), '_averg', '_cells_inh'))) = c2(find(r2==ev));
 end
-% antic cells are only cells which are not also entry cells
-keep1=ismember(events_averg.cells.drink_antic_cells, events_averg.cells.ed_cells);keep2=ismember(events_averg.cells.eat_antic_cells, events_averg.cells.ef_cells);
-events_averg.cells.drink_antic_cells = events_averg.cells.drink_antic_cells(find(keep1 ==0));events_averg.cells.eat_antic_cells = events_averg.cells.eat_antic_cells(find(keep2 ==0));%without entry cells
-keep1=ismember(events_averg.cells.drink_antic_cells_inh, events_averg.cells.ed_cells_inh);keep2=ismember(events_averg.cells.eat_antic_cells_inh, events_averg.cells.ef_cells_inh);
-events_averg.cells.drink_antic_cells_inh = events_averg.cells.drink_antic_cells_inh(find(keep1 ==0));events_averg.cells.eat_antic_cells_inh = events_averg.cells.eat_antic_cells_inh(find(keep2 ==0));%without entry cells
+
+%extremeCells = events_averg.cells;
+%find neuropil cells and remove from overall cell count
+events_averg.cellsNP = events_averg.cells;
+NpCells = [28 49 61 115];
+NpC = [12 66]; %only g2 and g12 trials run and enter run
+fn =fieldnames(events_averg.cells);
+for i= 1:numel(fn)
+    evt = events_averg.cells.(fn{i});
+    if i <39 
+        [X,Y] = ismember(evt,NpCells);
+        evt(Y(X)) = [];
+        events_averg.cells.(fn{i}) = evt;
+    elseif i > 38
+        [X,Y] = ismember(evt,NpC);
+        evt(Y(X)) = [];
+        events_averg.cells.(fn{i}) = evt;
+    end    
+end 
+
+
 
 % as vars in workspace
-ed_cells =c(find(r==1));ef_cells =c(find(r==2));es_cells =c(find(r==3));ee_cells =c(find(r==5));er_cells =c(find(r==6));
-drink_antic_cells =c(find(r==17));drink_cells =c(find(r==7));eat_antic_cells =c(find(r==18));eat_cells =c(find(r==8));
-be_cells =c(find(r==15));home_cells =c(find(r==16));soc_cells=c(find(r==4));expl_cells=c(find(r==14));%run_cells=c(find(r==14))
-exd_cells =c(find(r==9));exf_cells =c(find(r==10));exs_cells =c(find(r==11));exe_cells =c(find(r==12));exr_cells =c(find(r==13));
-%ed_c_cells =c(find(r==16));ef_c_cells =c(find(r==18));ed_nc_cells =c(find(r==15));ef_nc_cells =c(find(r==17));
-keep1=ismember(drink_antic_cells, ed_cells);keep2=ismember(eat_antic_cells, ef_cells);
-drink_antic_cells = drink_antic_cells(find(keep1 ==0));eat_antic_cells = eat_antic_cells(find(keep2 ==0));%without entry cells
+ed_cells =c(find(r==1));ef_cells =c(find(r==2));es_cells =c(find(r==3));ee_cells =c(find(r==5));er_cells =c(find(r==20));
+drink_antic_cells =c(find(r==18));drink_cells =c(find(r==6));eat_antic_cells =c(find(r==19));eat_cells =c(find(r==7));
+be_cells =c(find(r==16));home_cells =c(find(r==17));soc_cells=c(find(r==4));expl_cells=c(find(r==13));run_cells=c(find(r==21));
+%exd_cells =c(find(r==8));exf_cells =c(find(r==9));exs_cells =c(find(r==10));exe_cells =c(find(r==11));exr_cells =c(find(r==12));
+ef_nc_cells=c(find(r==14));er_nc_cells=c(find(r==15));
 
-ed_cells_inh =c2(find(r2==1));ef_cells_inh =c2(find(r2==2));es_cells_inh =c2(find(r2==3));ee_cells_inh =c2(find(r2==5));er_cells_inh =c2(find(r2==6));
-drink_antic_cells_inh =c2(find(r2==17));drink_cells_inh =c2(find(r2==7));eat_antic_cells_inh =c2(find(r2==18));eat_cells_inh =c2(find(r2==8));
-be_cells_inh =c2(find(r2==15));home_cells_inh =c2(find(r2==16));soc_cells_inh=c2(find(r2==4));expl_cells_inh=c2(find(r2==14));%run_cells_inh=c2(find(r2==14))
-exd_cells_inh =c2(find(r2==9));exf_cells_inh =c2(find(r2==10));exs_cells_inh =c2(find(r2==11));exe_cells_inh =c2(find(r2==12));exr_cells_inh =c2(find(r2==13));
-%ed_c_cells_inh =c(find(r2==16));ef_c_cells_inh =c(find(r2==18));ed_nc_cells_inh =c(find(r2==15));ef_nc_cells_inh =c(find(r2==17));
-keep1=ismember(drink_antic_cells_inh, ed_cells_inh);keep2=ismember(eat_antic_cells_inh, ef_cells_inh);
-drink_antic_cells_inh = drink_antic_cells_inh(find(keep1 ==0));eat_antic_cells_inh = eat_antic_cells_inh(find(keep2 ==0));%without entry cells
+
+ed_cells_inh =c2(find(r2==1));ef_cells_inh =c2(find(r2==2));es_cells_inh =c2(find(r2==3));ee_cells_inh =c2(find(r2==5));er_cells_inh =c2(find(r2==20));
+drink_antic_cells_inh =c2(find(r2==18));drink_cells_inh =c2(find(r2==6));eat_antic_cells_inh =c2(find(r2==19));eat_cells_inh =c2(find(r2==7));
+be_cells_inh =c2(find(r2==16));home_cells_inh =c2(find(r2==17));soc_cells_inh=c2(find(r2==4));expl_cells_inh=c2(find(r2==13));run_cells_inh=c2(find(r2==21));
+%exd_cells_inh =c2(find(r2==8));exf_cells_inh =c2(find(r2==9));exs_cells_inh =c2(find(r2==10));exe_cells_inh =c2(find(r2==11));exr_cells_inh =c2(find(r2==12));
+ef_nc_cells_inh=c2(find(r2==14));er_nc_cells_inh=c2(find(r2==15));
+
+
+find(events_averg.allSort.eat_averg>0.5);
 
 %% percentages
-all=59;
+
+events_averg.cellswithExit = events_averg.cells;
+%remove exits from cell list
+fnC = fieldnames(events_averg.cells);
+remF = [15:24];
+events_averg.cells = rmfield(events_averg.cells, fnC(remF));
+all=115;
 fn1=fieldnames(events_averg.cells);
 for j=1:numel(fn1)
     events_averg.perc.(fn1{j}) = [(size(events_averg.cells.(fn1{j}),1)/all)*100 ; size(events_averg.cells.(fn1{j}),1)];
 end
-%% 
-noEventCells = find((sum(events,1)) == 0); size(noEventCells,2)
-specializedCells = find((sum(events,1)) == 1);%cells which only have one function
+%% modify events array for counting, remove exits
+events2 = events;events2(events2 == 3) =0;% replace all 3 (non existant trials)
+events2(8:12,:) = [];
+noEventCells = find((sum(events2,1)) == 0); size(noEventCells,2);
+
 %% Specialization score
 specScore = [];
-for evnt = 1:size(events,2)
+for evnt = 1:size(events2,2)
     specNr = 0;
-    for cl = 1:size(events,1)
-        if events(cl,evnt) ~= 0 
+    for cl = 1:size(events2,1)
+        if events2(cl,evnt) ~= 0 
         specNr = specNr + 1;
         else
         specNr = specNr; 
@@ -300,529 +337,506 @@ end
 
 
 
-% plot specialization score
-figure; bar(NrSpecCells(2,:));hold on;
-xticks([1:size(dd,2)]);xticklabels(NrSpecCells(1,:));xlabel('\fontsize{12}Nr of encoded events');
-ylabel('\fontsize{12}Nr of cells');hold off;title('\fontsize{11}Specialization score')
+% % plot specialization score
+% figure; bar(NrSpecCells(2,:));hold on;
+% xticks([1:size(dd,2)]);xticklabels(NrSpecCells(1,:));xlabel('\fontsize{12}Nr of encoded events');
+% ylabel('\fontsize{12}Nr of cells');hold off;title('\fontsize{11}Specialization score')
+% ax = gca;ax.FontSize = 10;
+% %specializedCells = (find(specScore == 1));
 
-%% spec score without exits?
 
 %% piechart event cells, specialized and no event cells
-figure;label={' \fontsize{12}no event cells',' \fontsize{12}event cells', '\fontsize{12}specialized cells' };pieCells = [size(noEventCells,2), 59-(size(noEventCells,2) + size(specializedCells,2)), size(specializedCells,2)];
+figure;label={' \fontsize{12}no event cells',' \fontsize{12}event cells', '\fontsize{12}specialized cells' };pieCells = [NrSpecCells(2,1), 115-(NrSpecCells(2,1) + NrSpecCells(2,2)), NrSpecCells(2,2)];
 pie(pieCells, '%.1f%%');lgd = legend(label);
 
+%% idendity of specialized cells
+
+specializedCells = (find(specScore == 1));
+
+for i = 1:numel(specializedCells);
+    eventtype = find(events2(:,specializedCells(1,i)) ~= 0);
+    specializedCells(2,i) = eventtype;
+end
+%event numbers
+%eventlist = fieldnames(events_averg.allSort);eventlist(8:12,:) = [];
+
+specC = unique(specializedCells(2,:));
+for ii = 1:numel(specC)
+    spec{:,ii} = specializedCells(1,find(specializedCells(2,:)==specC(1,ii)));% cells which encode events in specC
+end
+
+%%plot
+
+% plot specialization score
+figure; 
+subplot(1,2,1);bar(NrSpecCells(2,:));hold on;
+xticks([1:size(dd,2)]);xticklabels(NrSpecCells(1,:));xlabel('\fontsize{12}Nr of encoded events');
+ylabel('\fontsize{12}Nr of cells');title('\fontsize{11}Specialization score')
+ax = gca;ax.FontSize = 10;
+%y= [size(spec{1,1},2) size(spec{1,2},2) size(spec{1,3},2) size(spec{1,4},2) size(spec{1,5},2) size(spec{1,6},2)  size(spec{1,8},2) size(spec{1,9},2) (size(spec{1,10},2)+size(spec{1,7},2))];
+
+y=[7 4 4 3 2 1 1 1 1];
+x=[1:numel(specC)-1] 
+subplot(1,2,2); bar(x,y);
+%;xticklabels({'enter drink', 'enter food', 'social', 'drink', 'eat','explore','nest' , 'eat antic', 'enter run' });
+xticklabels({'nest','social','explore', 'eat', 'enter run','enter food','eat antic','enter drink','drink' });
+%ylabel('\fontsize{12}Nr of cells');
+title('\fontsize{11}Specialized Cells')
+ylim([0 8]);
+ax = gca;ax.FontSize = 10;
+hold off;
+
+%pi chart with only specialized cells
+figure;label={'nest','social','explore', 'eat', 'enter run','enter food','eat antic','enter drink','drink' };pieCells = [7, 4, 4, 3, 2, 1, 1, 1, 1];
+pie(pieCells, '%.1f%%');lgd = legend(label);
+
+
 %% venn diagrams
-A = 1:59;
-%drink module
-setListData2={A ed_cells drink_antic_cells drink_cells};
-setLabels2=[ " " ;"entry drink ";"drink antic";"drink"];
-hh=vennEulerDiagram(setListData2, setLabels2, 'drawProportional', true);
-hh.ShowIntersectionCounts = true;
-
-size(find(ismember(ed_cells, drink_antic_cells, "rows")),1)
-size(find(ismember(ed_cells, drink_cells, "rows")),1)
-size(find(ismember(drink_cells, drink_antic_cells, "rows")),1)
-
-
-%eat module
-size(find(ismember(ef_cells, eat_antic_cells, "rows")),1)
-size(find(ismember(ef_cells, eat_cells, "rows")),1)
-size(find(ismember(eat_cells, eat_antic_cells, "rows")),1)
-
-
-
+% A = 1:115;
+% %excitatory
+% exCons = unique(cat(1,eat_cells, drink_cells, expl_cells, soc_cells, home_cells, run_cells));
+% InhConsum = unique(cat(1,eat_cells_inh, drink_cells_inh, expl_cells_inh, soc_cells_inh, home_cells_inh, run_cells_inh));
+% exApp = unique(cat(1,ef_cells, ed_cells, ee_cells, es_cells, be_cells, er_cells));
+% InhApp = unique(cat(1,ef_cells_inh, ed_cells_inh, ee_cells_inh, es_cells_inh, be_cells_inh, er_cells_inh));
+% 
+% setListData2={A exCons exApp};
+% setLabels2=[ "remaining " ;"cons ";"app"];
+% hh=vennEulerDiagram(setListData2, setLabels2, 'drawProportional', true);
+% hh.ShowIntersectionCounts = true;
+% 
+% 
+% %drink module
+% setListData2={A ed_cells drink_antic_cells drink_cells};
+% setLabels2=[ " " ;"entry drink ";"drink antic";"drink"];
+% hh=vennEulerDiagram(setListData2, setLabels2, 'drawProportional', true);
+% hh.ShowIntersectionCounts = true;
+% 
+% size(find(ismember(ed_cells, drink_antic_cells, "rows")),1)
+% size(find(ismember(ed_cells, drink_cells, "rows")),1)
+% size(find(ismember(drink_cells, drink_antic_cells, "rows")),1)
+% %eat module
+% size(find(ismember(ef_cells, eat_antic_cells, "rows")),1)
+% size(find(ismember(ef_cells, eat_cells, "rows")),1)
+% size(find(ismember(eat_cells, eat_antic_cells, "rows")),1)
 
 %% bar plots 
 % entries
 Entries = [size(ed_cells,1) size(ed_cells_inh,1); size(ef_cells,1) size(ef_cells_inh,1); size(es_cells,1)  size(es_cells_inh,1);size(er_cells,1) size(er_cells_inh,1);size(ee_cells,1) size(ee_cells_inh,1);size(be_cells,1) size(be_cells_inh,1)];
 X = categorical({'drink','food','social','run','explore','end'});X = reordercats(X,{'drink','food','social','run','explore', 'end'});
-figure; bar(X,Entries,'stacked'); ylabel('\fontsize{12}Nr of cells');
-% overlap
-edef = size(find(ismember(ed_cells, ef_cells, "rows")),1);
-edes = size(find(ismember(ed_cells, es_cells, "rows")),1);
-eder = size(find(ismember(ed_cells, er_cells, "rows")),1);
-edee = size(find(ismember(ed_cells, ee_cells, "rows")),1);
-edbe = size(find(ismember(ed_cells, be_cells, "rows")),1);
+figure; bar(X,Entries,'stacked'); ylabel('\fontsize{12}Nr of cells');ylim([1 60]);
 
-EntriesD = [(size(ed_cells,1)-edef) edef (size(ef_cells,1)-edef); (size(ed_cells,1)-edes) edes (size(es_cells,1)-edes); (size(ed_cells,1)-eder) eder (size(er_cells,1)-eder);(size(ed_cells,1)-edee) edee (size(ee_cells,1)-edee);(size(ed_cells,1)-edbe) edbe (size(be_cells,1)-edbe)]
-X = categorical({'drink vs food','drink vs social','drink vs run', 'drink vs expl', 'drink vs be'});X = reordercats(X,{'drink vs food','drink vs social','drink vs run', 'drink vs expl', 'drink vs be'});
-figure; bar(X,EntriesD,'stacked'); ylabel('\fontsize{12}Nr of cells');ylim([0 30]);
+Entries = [size(ed_cells,1) size(ed_cells_inh,1); size(ef_cells,1) size(ef_cells_inh,1); size(es_cells,1)  size(es_cells_inh,1);size(er_cells,1) size(er_cells_inh,1);size(ee_cells,1) size(ee_cells_inh,1);size(be_cells,1) size(be_cells_inh,1)];
+ylabel({'Entries'});
+yticks([1:6]); yticklabels({'drink','food','social','run','explore','end'});
+figure; b1= barh(Entries,'stacked');ylim([0.5 6.5]);xlim([0 26]);%
 
-% overlap greater than chance?
-A= size(ed_cells,1)/59;
-B= size(be_cells,1)/59;
-ABfound = edbe/59
-AnBexpected = (A*B)
-
-% enter food
-efed = size(find(ismember(ef_cells, ed_cells, "rows")),1);
-efes = size(find(ismember(ef_cells, es_cells, "rows")),1);
-efer = size(find(ismember(ef_cells, er_cells, "rows")),1);
-efee = size(find(ismember(ef_cells, ee_cells, "rows")),1);
-efbe = size(find(ismember(ef_cells, be_cells, "rows")),1);
-
-EntriesF = [(size(ef_cells,1)-efed) efed (size(ed_cells,1)-efed);(size(ef_cells,1)-efes) efes (size(es_cells,1)-efes); (size(ef_cells,1)-efer) efer (size(er_cells,1)-efer); (size(ef_cells,1)-efee) efee (size(ee_cells,1)-efee); (size(ef_cells,1)-efbe) efbe (size(ee_cells,1)-efbe)]
-X = categorical({'food vs drink','food vs social','food vs run','food vs explore','food vs be'});X = reordercats(X,{'food vs drink','food vs social','food vs run','food vs explore','food vs be'});
-figure; bar(X,EntriesF,'stacked'); ylabel('\fontsize{12}Nr of cells');ylim([0 30]);
-
-% overlap greater than chance?
-A= size(ef_cells,1)/59;
-B= size(ee_cells,1)/59;
-ABfound = efee/59
-AnBexpected = (A*B)
-
-%enter social
-esed = size(find(ismember(es_cells, ed_cells, "rows")),1);
-esef = size(find(ismember(es_cells, ef_cells, "rows")),1);
-esbe = size(find(ismember(es_cells, be_cells, "rows")),1);
-eser = size(find(ismember(es_cells, er_cells, "rows")),1);
-esee = size(find(ismember(es_cells, ee_cells, "rows")),1);
-
-EntriesS = [ (size(es_cells,1)-esed) esed (size(ed_cells,1)-esed);(size(es_cells,1)-esef) esef (size(ef_cells,1)-esef);(size(es_cells,1)-eser) eser (size(er_cells,1)-eser); (size(es_cells,1)-esee) esee (size(ee_cells,1)-esee);(size(es_cells,1)-esbe) esbe (size(be_cells,1)-esbe)]
-X = categorical({'soc vs drink','soc vs food','soc vs run','soc vs explore','soc vs be'});X = reordercats(X,{'soc vs drink','soc vs food','soc vs run','soc vs explore','soc vs be'});
-figure; bar(X,EntriesS,'stacked'); ylabel('\fontsize{12}Nr of cells');ylim([0 30]);
-% overlap greater than chance?
-A= size(es_cells,1)/59;
-B= size(be_cells,1)/59;
-ABfound = esbe/59
-AnBexpected = (A*B)
 
 %% consumption %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Cons = [size(drink_cells,1) size(drink_cells_inh,1); size(eat_cells,1) size(eat_cells_inh,1); size(soc_cells,1)  size(soc_cells_inh,1);size(expl_cells,1) size(expl_cells_inh,1);size(home_cells,1) size(home_cells_inh,1)];
+Cons = [size(drink_cells,1) size(drink_cells_inh,1); size(eat_cells,1) size(eat_cells_inh,1); size(soc_cells,1)  size(soc_cells_inh,1); size(run_cells,1)  size(run_cells_inh,1)     ;size(expl_cells,1) size(expl_cells_inh,1);size(home_cells,1) size(home_cells_inh,1)];
 X = categorical({'drink','eat','social','explore','home'});X = reordercats(X,{'drink','eat','social','explore','home'});
-figure; bar(X,Cons,'stacked'); ylabel('\fontsize{12}Nr of cells');
-% overlap drink 
-drinkEat = size(find(ismember(drink_cells, eat_cells, "rows")),1);
-drinkSoc = size(find(ismember(drink_cells, soc_cells, "rows")),1);
-drinkExpl = size(find(ismember(drink_cells, expl_cells, "rows")),1);
-drinkHome = size(find(ismember(drink_cells, home_cells, "rows")),1);
+figure; bar(X,Cons,'stacked'); ylabel('\fontsize{12}Nr of cells');ylim([1 60]);
 
-ConsAntic = [(size(drink_cells,1)-drinkEat) drinkEat (size(eat_cells,1)-drinkEat); (size(drink_cells,1)-drinkSoc) drinkSoc (size(soc_cells,1)-drinkSoc);(size(drink_cells,1)-drinkExpl) drinkExpl (size(expl_cells,1)-drinkExpl);(size(drink_cells,1)-drinkHome) drinkHome (size(home_cells,1)-drinkHome)]
-X = categorical({'drink vs eat','drink vs soc','drink vs expl','drink vs home'});X = reordercats(X,{'drink vs eat','drink vs soc','drink vs expl','drink vs home'});
-figure; bar(X,ConsAntic,'stacked'); ylabel('\fontsize{12}Nr of cells');ylim([0 40]);
-
-
-% overlap greater than chance?
-A= size(drink_cells,1)/59;
-B= size(home_cells,1)/59;
-ABfound = drinkHome/59
-AnBexpected = (A*B)
-
-% Eat 
-eatDrink = size(find(ismember(eat_cells, drink_cells, "rows")),1);
-eatSoc = size(find(ismember(eat_cells, soc_cells, "rows")),1);
-eatExpl = size(find(ismember(eat_cells, expl_cells, "rows")),1);
-eatHome = size(find(ismember(eat_cells, home_cells, "rows")),1);
-
-ConsAntic = [(size(eat_cells,1)-eatDrink) eatDrink (size(drink_cells,1)-eatDrink); (size(eat_cells,1)-eatSoc) eatSoc (size(soc_cells,1)-eatSoc);(size(eat_cells,1)-eatExpl) eatExpl (size(expl_cells,1)-eatExpl);(size(eat_cells,1)-eatHome) eatHome (size(home_cells,1)-eatHome)]
-X = categorical({'eat vs eat','eat vs soc','eat vs expl','eat vs home'});X = reordercats(X,{'eat vs eat','eat vs soc','eat vs expl','eat vs home'});
-figure; bar(X,ConsAntic,'stacked'); ylabel('\fontsize{12}Nr of cells');ylim([0 40]);
-
-
-% overlap greater than chance?
-A= size(eat_cells,1)/59;
-B= size(home_cells,1)/59;
-ABfound = eatHome/59
-AnBexpected = (A*B)
-
-% Social 
-socDrink = size(find(ismember(soc_cells, drink_cells, "rows")),1);
-socEat = size(find(ismember(soc_cells, eat_cells, "rows")),1);
-socExpl = size(find(ismember(soc_cells, expl_cells, "rows")),1);
-socHome = size(find(ismember(soc_cells, home_cells, "rows")),1);
-
-ConsAntic = [(size(soc_cells,1)-socDrink) socDrink (size(drink_cells,1)-socDrink); (size(soc_cells,1)-socEat) socEat (size(eat_cells,1)-socEat);(size(soc_cells,1)-socExpl) socExpl (size(expl_cells,1)-socExpl);(size(soc_cells,1)-socHome) socHome (size(home_cells,1)-socHome)]
-X = categorical({'soc vs soc','soc vs eat','soc vs expl','soc vs home'});X = reordercats(X,{'soc vs soc','soc vs eat','soc vs expl','soc vs home'});
-figure; bar(X,ConsAntic,'stacked'); ylabel('\fontsize{12}Nr of cells');ylim([0 40]);
-
-
-% overlap greater than chance?
-A= size(soc_cells,1)/59;
-B= size(home_cells,1)/59;
-ABfound = socHome/59
-AnBexpected = (A*B)
-
-%Inhibitory 
-
-drinkEat = size(find(ismember(drink_cells, eat_cells, "rows")),1);
-drinkInhEatInh = size(find(ismember(drink_cells_inh, eat_cells_inh, "rows")),1);
-drinkInhEat= size(find(ismember(drink_cells_inh, eat_cells, "rows")),1);
-EatInhDrink= size(find(ismember(eat_cells_inh, drink_cells, "rows")),1);
-
-ConsAntic = [(size(drink_cells,1)-drinkEat) drinkEat (size(eat_cells,1)-drinkEat); (size(drink_cells_inh,1)-drinkInhEatInh) drinkInhEatInh (size(eat_cells_inh,1)-drinkInhEatInh); (size(drink_cells_inh,1)-drinkInhEat) drinkInhEat (size(eat_cells,1)-drinkInhEat); (size(drink_cells,1)-EatInhDrink) EatInhDrink (size(eat_cells_inh,1)-EatInhDrink)]
-X = categorical({'drink vs eat','drink inh vs eat inh','drink inh vs eat','drink vs eat inh'});X = reordercats(X,{'drink vs eat','drink inh vs eat inh','drink inh vs eat','drink vs eat inh'});
-figure; bar(X,ConsAntic,'stacked'); ylabel('\fontsize{12}Nr of cells');ylim([0 40]);
-
-
-% overlap greater than chance?
-A= size(drink_cells,1)/59;
-B= size(eat_cells_inh,1)/59;
-ABfound = EatInhDrink/59
-AnBexpected = (A*B)
-
-
-% antic cells
-drinkAnticDrink = size(find(ismember(drink_antic_cells, drink_cells, "rows")),1);
-eatAnticEat = size(find(ismember(eat_antic_cells, eat_cells, "rows")),1);
-drinkAnticEatAntic = size(find(ismember(eat_antic_cells, drink_antic_cells, "rows")),1);
-
-ConsAntic = [(size(drink_antic_cells,1)-drinkAnticDrink) drinkAnticDrink (size(drink_cells,1)-drinkAnticDrink); (size(eat_antic_cells,1)-eatAnticEat) eatAnticEat (size(eat_cells,1)-eatAnticEat); (size(eat_antic_cells,1)-drinkAnticEatAntic) drinkAnticEatAntic (size(drink_antic_cells,1)-drinkAnticEatAntic)]; 
-X = categorical({'drink antic vs drink','eat antic vs eat ', 'eat antic vs drink antic'});X = reordercats(X,{'drink antic vs drink','eat antic vs eat ','eat antic vs drink antic'});
-figure; bar(X,ConsAntic,'stacked'); ylabel('\fontsize{12}Nr of cells');ylim([0 25]);
-
-
-% overlap greater than chance?
-A= size(eat_antic_cells,1)/59;
-B= size(drink_antic_cells,1)/59;
-ABfound = drinkAnticEatAntic/59
-AnBexpected = (A*B)
-
-
-
-
-
-% social
-socialEat = size(find(ismember(soc_cells, eat_cells, "rows")),1);
-socialDrink = size(find(ismember(soc_cells, drink_cells, "rows")),1);
-
-ConsAntic = [(size(soc_cells,1)-socialEat) socialEat (size(eat_cells,1)-socialEat); (size(soc_cells,1)-socialDrink) socialDrink (size(drink_cells,1)-socialDrink)]; 
-X = categorical({'social vs eat','social vs drink '});X = reordercats(X,{'social vs eat','social vs drink '});
-figure; bar(X,ConsAntic,'stacked'); ylabel('\fontsize{12}Nr of cells');%ylim([0 25]);
-
-
-exploreEat = size(find(ismember(expl_cells, eat_cells, "rows")),1);
-exploreDrink = size(find(ismember(expl_cells, drink_cells, "rows")),1);
-socialExplore = size(find(ismember(soc_cells, expl_cells, "rows")),1);
-
-ConsAntic = [(size(soc_cells,1)-socialEat) socialEat (size(eat_cells,1)-socialEat); (size(soc_cells,1)-socialDrink) socialDrink (size(drink_cells,1)-socialDrink)]; 
-X = categorical({'social vs eat','social vs drink '});X = reordercats(X,{'social vs eat','social vs drink '});
-figure; bar(X,ConsAntic,'stacked'); ylabel('\fontsize{12}Nr of cells');%ylim([0 25]);
-
-%% scatterplots
- f1= figure; 
- figure(f1);hold on,
-    subplot(2,2,1);scatter(events_averg.all.eat_averg,events_averg.all.drink_averg,	"g", LineWidth=1);
-    xlabel('\fontsize{12}Ca+-response eat');ylabel('\fontsize{12}drink ');hold on;plot([0 2],[0 0],"k");plot([0 0],[0 2],"k");plot([-1, 0],[-1,0],"k");%plot([-1, 0.5],[0.5,0.5],	"m");plot([0.5,0.5],[-2, 0.5],	"m");
-    xlim([-1 2]);  %xlim([-1 1])
-    scatter(([events_averg.all.eat_averg(1,(eat_cells(:,1)))]),([events_averg.all.drink_averg(1,(eat_cells(:,1)))]),'r', LineWidth=1);scatter(([events_averg.all.eat_averg(1,(eat_cells_inh(:,1)))]),([events_averg.all.drink_averg(1,(eat_cells_inh(:,1)))]),'b', LineWidth=1);
-    scatter(([events_averg.all.eat_averg(1,(drink_cells(:,1)))]),([events_averg.all.drink_averg(1,(drink_cells(:,1)))]),"*",'r');scatter(([events_averg.all.eat_averg(1,(drink_cells_inh(:,1)))]),([events_averg.all.drink_averg(1,(drink_cells_inh(:,1)))]),"*",'b');
-    
-    subplot(2,2,2);scatter(events_averg.all.eat_antic_averg,events_averg.all.drink_antic_averg,	"g", LineWidth=1);hold on;plot([0 2],[0 0],"k");plot([0 0],[0 2],"k");plot([-1, 0],[-1,0],"k");%plot([-1, 0.5],[0.5,0.5],	"m");plot([0.5,0.5],[-1, 0.5],	"m");
-    xlabel('\fontsize{12}Ca+-response eat anticipatory');ylabel('\fontsize{12}drink anticipatory ');
-    xlim([-1 2]);
-    scatter(([events_averg.all.eat_antic_averg(1,(eat_antic_cells(:,1)))]),([events_averg.all.drink_antic_averg(1,(eat_antic_cells(:,1)))]),'r', LineWidth=1);scatter(([events_averg.all.eat_antic_averg(1,(eat_antic_cells_inh(:,1)))]),([events_averg.all.drink_antic_averg(1,(eat_antic_cells_inh(:,1)))]),'b',LineWidth=1);
-    scatter(([events_averg.all.eat_antic_averg(1,(drink_antic_cells(:,1)))]),([events_averg.all.drink_antic_averg(1,(drink_antic_cells(:,1)))]),"*",'r');scatter(([events_averg.all.eat_antic_averg(1,(drink_antic_cells_inh(:,1)))]),([events_averg.all.drink_antic_averg(1,(drink_antic_cells_inh(:,1)))]),"*",'b');
-    
-    subplot(2,2,3);scatter(events_averg.all.eat_averg,events_averg.all.soc_averg,"g", LineWidth=1);hold on;plot([0 2],[0 0],"k");plot([0 0],[0 2],"k");plot([-1, 0],[-1,0],"k");%plot([-1, 0.5],[0.5,0.5],	"m");plot([0.5,0.5],[-2, 0.5],	"m");
-    xlabel('\fontsize{12}Ca+-response eat');ylabel('\fontsize{12}social contact');
-    xlim([-1 2]);
-    scatter(([events_averg.all.eat_averg(1,(eat_cells(:,1)))]),([events_averg.all.soc_averg(1,(eat_cells(:,1)))]),'r',  LineWidth=1);scatter(([events_averg.all.eat_averg(1,(eat_cells_inh(:,1)))]),([events_averg.all.soc_averg(1,(eat_cells_inh(:,1)))]),'b',LineWidth=1);
-    scatter(([events_averg.all.eat_averg(1,(soc_cells(:,1)))]),([events_averg.all.soc_averg(1,(soc_cells(:,1)))]),"*",'r');scatter(([events_averg.all.eat_averg(1,(soc_cells_inh(:,1)))]),([events_averg.all.soc_averg(1,(soc_cells_inh(:,1)))]),"*",'b');
-    
-%     subplot(2,2,4);scatter(events_averg.all.be_averg,events_averg.all.home_averg,"g", LineWidth=1);hold on;plot([0 2],[0 0],"k");plot([0 0],[0 3],"k");plot([-1, 0],[-1,0],"k");%plot([-1, 0.5],[0.5,0.5],	"m");plot([0.5,0.5],[-1, 0.5],	"m");
-%     xlabel('\fontsize{12}Ca+-response block end');ylabel('\fontsize{12}homecage');
-%     xlim([-1 2]);
-%     scatter(([events_averg.all.be_averg(1,(be_cells(:,1)))]),([events_averg.all.home_averg(1,(be_cells(:,1)))]),'r', LineWidth=1);scatter(([events_averg.all.be_averg(1,(be_cells_inh(:,1)))]),([events_averg.all.home_averg(1,(be_cells_inh(:,1)))]),'b',LineWidth=1);
-%     scatter(([events_averg.all.be_averg(1,(home_cells(:,1)))]),([events_averg.all.home_averg(1,(home_cells(:,1)))]),"*",'r');scatter(([events_averg.all.be_averg(1,(home_cells_inh(:,1)))]),([events_averg.all.home_averg(1,(home_cells_inh(:,1)))]),"*",'b');
-
-    subplot(2,2,4);scatter(events_averg.all.be_averg,events_averg.all.home_averg,"g", LineWidth=1);hold on;plot([0 2],[0 0],"k");plot([0 0],[0 3],"k");plot([-1, 0],[-1,0],"k");%plot([-1, 0.5],[0.5,0.5],	"m");plot([0.5,0.5],[-1, 0.5],	"m");
-    xlabel('\fontsize{12}Ca+-response block end');ylabel('\fontsize{12}homecage');
-    xlim([-1 2]);
-    scatter(([events_averg.all.be_averg(1,(be_cells(:,1)))]),([events_averg.all.home_averg(1,(be_cells(:,1)))]),'r', LineWidth=1);scatter(([events_averg.all.be_averg(1,(be_cells_inh(:,1)))]),([events_averg.all.home_averg(1,(be_cells_inh(:,1)))]),'b',LineWidth=1);
-    scatter(([events_averg.all.be_averg(1,(home_cells(:,1)))]),([events_averg.all.home_averg(1,(home_cells(:,1)))]),"*",'r');scatter(([events_averg.all.be_averg(1,(home_cells_inh(:,1)))]),([events_averg.all.home_averg(1,(home_cells_inh(:,1)))]),"*",'b');
-
-f2= figure; lims = [-1 1];
- figure(f2);hold on;
-    subplot(2,2,1);scatter(events_averg.all.ed_averg,events_averg.all.ef_averg,	"g", LineWidth=1);hold on;plot([0 1.5],[0 0],"k");plot([0 0],[0 1.5],"k");plot([-1, 0],[-1,0],"k");%plot([-1, 0.5],[0.5,0.5],	"m");plot([0.5,0.5],[-1, 0.5],	"m");%plot(X,Y)
-    xlabel('\fontsize{12}Ca+-response enter drink');ylabel('\fontsize{12}enter food ');
-    xlim([-1 1.5]); 
-    scatter(([events_averg.all.ed_averg(1,(ed_cells(:,1)))]),([events_averg.all.ef_averg(1,(ed_cells(:,1)))]),'r', LineWidth=1);scatter(([events_averg.all.ed_averg(1,(ed_cells_inh(:,1)))]),([events_averg.all.ef_averg(1,(ed_cells_inh(:,1)))]),'b',LineWidth=1);
-    scatter(([events_averg.all.ed_averg(1,(ef_cells(:,1)))]),([events_averg.all.ef_averg(1,(ef_cells(:,1)))]),"*",'r');scatter(([events_averg.all.ed_averg(1,(ef_cells_inh(:,1)))]),([events_averg.all.ef_averg(1,(ef_cells_inh(:,1)))]),"*",'b');
-    legend({'ed cells ex','ed cells inh','ef cells ex' , 'ef cells inh'});
-    subplot(2,2,2);scatter(events_averg.all.ed_averg,events_averg.all.es_averg,	"g", LineWidth=1);hold on;plot([0 1.5],[0 0],"k");plot([0 0],[0 1.5],"k");plot([-1, 0],[-1,0],"k");%plot([-1, 0.5],[0.5,0.5],	"m");plot([0.5,0.5],[-1, 0.5],	"m");
-    xlabel('\fontsize{12}Ca+-response enter drink');ylabel('\fontsize{12}enter social ');
-    xlim([-1 1.5]);
-    scatter(([events_averg.all.ed_averg(1,(ed_cells(:,1)))]),([events_averg.all.es_averg(1,(ed_cells(:,1)))]),'r', LineWidth=1);scatter(([events_averg.all.ed_averg(1,(ed_cells_inh(:,1)))]),([events_averg.all.er_averg(1,(ed_cells_inh(:,1)))]),'b',LineWidth=1);
-    scatter(([events_averg.all.ed_averg(1,(es_cells(:,1)))]),([events_averg.all.es_averg(1,(es_cells(:,1)))]),"*",'r');scatter(([events_averg.all.ed_averg(1,(es_cells_inh(:,1)))]),([events_averg.all.es_averg(1,(es_cells_inh(:,1)))]),"*",'b');
-
-
-    subplot(2,2,3);scatter(events_averg.all.ed_averg,events_averg.all.er_averg,	"g", LineWidth=1);hold on;plot([0 1.5],[0 0],"k");plot([0 0],[0 1.5],"k");plot([-1, 0],[-1,0],"k");%plot([-1, 0.5],[0.5,0.5],	"m");plot([0.5,0.5],[-1, 0.5],	"m");
-    xlabel('\fontsize{12}Ca+-response enter drink');ylabel('\fontsize{12}enter run');
-    xlim([-1 1.5]);
-    scatter(([events_averg.all.ed_averg(1,(ed_cells(:,1)))]),([events_averg.all.er_averg(1,(ed_cells(:,1)))]),'r', LineWidth=1);scatter(([events_averg.all.ed_averg(1,(ed_cells_inh(:,1)))]),([events_averg.all.er_averg(1,(ed_cells_inh(:,1)))]),'b',LineWidth=1);
-    scatter(([events_averg.all.ed_averg(1,(er_cells(:,1)))]),([events_averg.all.er_averg(1,(er_cells(:,1)))]),"*",'r');scatter(([events_averg.all.ed_averg(1,(er_cells_inh(:,1)))]),([events_averg.all.er_averg(1,(er_cells_inh(:,1)))]),"*",'b');
-
-
-    subplot(2,2,4);scatter(events_averg.all.ed_averg,events_averg.all.be_averg,	"g", LineWidth=1);hold on;plot([0 1.5],[0 0],"k");plot([0 0],[0 1.5],"k");plot([-1, 0],[-1,0],"k");%plot([-1, 0.5],[0.5,0.5],	"m");plot([0.5,0.5],[-1, 0.5],	"m");
-    xlabel('\fontsize{12}Ca+-response enter drink');ylabel('\fontsize{12}block end');
-    xlim([-1 1.5]);   
-    scatter(([events_averg.all.ed_averg(1,(ed_cells(:,1)))]),([events_averg.all.be_averg(1,(ed_cells(:,1)))]),'r', LineWidth=1);scatter(([events_averg.all.ed_averg(1,(ed_cells_inh(:,1)))]),([events_averg.all.ef_averg(1,(ed_cells_inh(:,1)))]),'b',LineWidth=1);
-    scatter(([events_averg.all.ed_averg(1,(be_cells(:,1)))]),([events_averg.all.be_averg(1,(be_cells(:,1)))]),"*",'r');scatter(([events_averg.all.be_averg(1,(be_cells_inh(:,1)))]),([events_averg.all.be_averg(1,(be_cells_inh(:,1)))]),"*",'b');
-
-
+yticks([1:6]); yticklabels({'drink','food','social','run','explore','end'});
+figure; b1= barh(Cons,'stacked');ylim([0.5 6.5]);xlim([0 61]);%
 
 %% compare nr of cells before entry vs consum
 
-ExConsC = unique(cat(1,c(r == 4),c(r == 7),c(r == 8), c(r == 16)));
-ExEntryC = unique(cat(1,c(r == 1),c(r == 2),c(r == 3), c(r == 5) ,c(r == 6) ,c (r == 15)));
+
+ExConsC = unique(cat(1,eat_cells, drink_cells, expl_cells, soc_cells, home_cells, run_cells));
+InhConsC = unique(cat(1,eat_cells_inh, drink_cells_inh, expl_cells_inh, soc_cells_inh, home_cells_inh, run_cells_inh));
+ExEntryC = unique(cat(1,ef_cells, ed_cells, ee_cells, es_cells, be_cells, er_cells, eat_antic_cells, drink_antic_cells));
+InhEntryC = unique(cat(1,ef_cells_inh, ed_cells_inh, ee_cells_inh, es_cells_inh, be_cells_inh, er_cells_inh,eat_antic_cells_inh, drink_antic_cells_inh));
+
 isboth = ismember(ExConsC,ExEntryC);ExBoth = ExConsC(isboth == 1);
 isExConsConly = ismember(ExConsC, ExBoth); ExConsConly = ExConsC(isExConsConly == 0); 
 isExEntryConly = ismember(ExEntryC, ExBoth); ExEntryConly = ExEntryC(isExEntryConly == 0);
 
-InhConsC = unique(cat(1,c2(r2 == 4),c2(r2 == 7),c2(r2 == 8), c2(r2 == 16)));
-InhEntryC = unique(cat(1,c2(r2 == 1),c2(r2 == 2),c2(r2 == 3), c2(r2 == 5) ,c2(r2 == 6) ,c2 (r2 == 15)));
 isboth = ismember(InhConsC,InhEntryC);InhBoth = InhConsC(isboth == 1);
 isInhConsConly = ismember(InhConsC, InhBoth); InhConsConly = InhConsC(isInhConsConly == 0); 
 isInhEntryConly = ismember(InhEntryC, InhBoth); InhEntryConly = InhEntryC(isInhEntryConly == 0);
 
-ystacked = [size(InhEntryConly,1) size(InhBoth,1) (size(InhConsConly,1) + size(drink_antic_cells_inh,1) + size(eat_antic_cells_inh,1)) ;size(ExEntryConly,1) size(ExBoth,1) (size(ExConsConly,1)+ size(drink_antic_cells,1) + size(eat_antic_cells,1))];
-figure; bar(ystacked,'stacked'); hold on; xticklabels({'Inh', 'Exc'});clear ylabel;ylabel('\fontsize{12}Nr of cells');
+ystacked = [size(InhEntryConly,1) size(InhBoth,1) (size(InhConsConly,1)) ;size(ExEntryConly,1) size(ExBoth,1) (size(ExConsConly,1))];
+figure; bar(ystacked,'stacked'); hold on; yticklabels({'Inh', 'Exc'});clear ylabel;xlabel('\fontsize{12}Nr of cells');
 label={' \fontsize{12}Appetitive', '\fontsize{12} Both',' \fontsize{12}Consummatory'};lgd = legend(label);
 
+
+%venn R
+%Inh: A =115 B =24 C=11 both =30
+%Exc: A =115 B =11 C=42 both =37
+
+
 % overlap greater than chance?
-A= size(InhEntryC,1)/59;
-B= (size(InhConsC,1) + size(drink_antic_cells_inh,1) + size(eat_antic_cells_inh,1))/59;
-ABobserved = size(InhBoth,1)/59
+A= size(InhEntryC,1)/115;
+B= size(InhConsC,1)/115;
+ABobserved = size(InhBoth,1)/115;
 AnBexpected = (A*B)
 
-ABobserved*59
-AnBexpected*59
+ABobserved*115
+AnBexpected*115
 
-A= size(ExEntryC,1)/59;
-B= (size(ExConsC,1)+ size(drink_antic_cells,1) + size(eat_antic_cells,1))/59;
-ABobserved = size(ExBoth,1)/59
+A= size(ExEntryC,1)/115;
+B= size(ExConsC,1)/115;
+ABobserved = size(ExBoth,1)/115
 AnBexpected = (A*B)
 
 
 
 %% all trials from one cell
 fnEA = fieldnames(events_averg);
-anim = 3;
-fnEAanimal = fieldnames(events_averg.(fnEA{anim}));fnEAanimal = fnEAanimal(17:end,1);% baselined individual traces
-Event = 2; CellID =7;
+anim = 4;
+fnEAan = fieldnames(events_averg.(fnEA{anim}));
+fnEAanimal = fnEAan(20:38,1);% baselined individual traces
+fnEAanimalNP = fnEAan(39:end,1);
+Event = 8; CellID =15;
 %
 Cell1 = events_averg.(fnEA{anim}).(fnEAanimal{Event})(:,CellID,:);
 C1 = reshape(Cell1 ,[],size(Cell1,3));
+%NP
+Cell1NP = events_averg.(fnEA{anim}).(fnEAanimalNP{Event});
+C1NP = reshape(Cell1NP ,[],size(Cell1NP,3));
 %entry
-figure; plot(C1, LineWidth=1);hold on; plot((mean(C1,2)),'k' ,LineWidth=4);
-xticks([1 11 21 31]);xticklabels({'-3','-2','-1', '0'});xlabel('\fontsize{12}time from event[s]');xlim([1 31]);
-ylabel('\fontsize{12}Ca-activity (z-scored, s.d.)');%title(['\fontsize{10}entry drink inhibited cell']);
+% figure; plot(C1, LineWidth=1);hold on; plot((mean(C1,2)),'k' ,LineWidth=4);
+% xticks([1 11 21 31]);xticklabels({'-3','-2','-1', '0'});xlabel('\fontsize{12}time from event[s]');xlim([1 31]);
+% ylabel('\fontsize{12}Ca-activity (z-scored, s.d.)');%title(['\fontsize{10}entry drink inhibited cell']);
 
 %cons
-%figure; plot(C1, LineWidth=1);hold on; plot((mean(C1,2)),'k' ,LineWidth=4);
-%xticks([1 11 21 31 41 51 61]);xticklabels({'-3','-2','-1', '0', '1', '2', '3'});xlabel('\fontsize{12}time from event[s]');xlim([1 61]);
-%ylabel('\fontsize{12}Ca-activity (z-scored, s.d.)');%title(['\fontsize{10}entry drink inhibited cell']);
+figure; plot(C1, LineWidth=1);hold on; plot((mean(C1,2)),'k' ,LineWidth=4);
+xticks([1 11 21 31 41 51 61]);xticklabels({'-3','-2','-1', '0', '1', '2', '3'});xlabel('\fontsize{12}time from event[s]');xlim([1 61]);
+ylabel('\fontsize{12}Ca-activity (z-scored, s.d.)');%title(['\fontsize{10}entry drink inhibited cell']);
 
 %% averg traces from multiple cells
 fnAll = fieldnames(events_averg.all);
-Event = 1;
-Cells = [14 16 5 57 6 37];
+Event = 8;
+%Cells = [1 35 38 66 76];
+Cells = [35 38 66 76 114];
 
 figure; plot(events_averg.all.(fnAll{Event}) (:, Cells), LineWidth=2);hold on; xlim([1 30]); 
-xticks([1 5 10 15 20 25 30]); xticklabels({'-3','-2.5' ,'-2','-1.5' ,'-1' , '-0.5', '0'});xlabel('\fontsize{12}time from event [s]'); ylabel('\fontsize{12}averg Ca-activity (z-scored, s.d.)');
+xticks([1 5 10 15 20 25 30]); xticklabels({'-3','-2' ,'-1','0' ,'1' , '2', '3'});xlabel('\fontsize{12}time from event [s]'); ylabel('\fontsize{12}averg Ca-activity (z-scored, s.d.)');
 %plot([1 10], [-0.9 -0.9],"k", LineWidth=3);plot([15 30], [-0.9 -0.9],"k", LineWidth=3);
 %text(2.5,-0.8,'baseline');text(16,-0.8,'event window');
-legend({'\fontsize{10}c14','\fontsize{10}c16', '\fontsize{10}c5','\fontsize{10}c57','\fontsize{10}c6','\fontsize{10}c37'}, Location="northwest");
+legend({'\fontsize{10}c5','\fontsize{10}c4', '\fontsize{10}c3','\fontsize{10}c2','\fontsize{10}c1'}, Location="northwest");
 
-% for shuffles
+%% averg traces of event cells
+%cells = [excited no event inhibited soc cell]
+event = "ed_averg_bsl"; tit = ['\fontsize{14}enter drink'];cells =[50 64 36 24];
+%event = "ef_averg_bsl"; tit = ['\fontsize{14}enter food'];cells =[14 64 53 24];
+%event = "es_averg_bsl"; tit = ['\fontsize{14}enter social'];cells =[50 64 18 24];
+%event = "er_averg_bsl"; tit = ['\fontsize{14}enter run'];cells =[66 64 78 24];
+%event = "ee_averg_bsl"; tit = ['\fontsize{14}enter explore'];cells =[74 6 24];%no inhib explore cells
+%event = "blockend_averg_bsl"; tit = ['\fontsize{14}block end'];cells =[102 64 66 24];
+% 
+%event = "drink_averg_bsl"; tit = ['\fontsize{14}drink'];cells =[51 64 102 24];
+%event = "eat_averg_bsl"; tit = ['\fontsize{14}eat'];cells =[76 64 14 24];
+%event = "soc_averg_bsl"; tit = ['\fontsize{14}social'];cells =[82 64 50 24];
+%event = "expl_averg_bsl"; tit = ['\fontsize{14}explore'];cells =[47 64 19 24];
+%event = "run_averg_bsl"; tit = ['\fontsize{14}run'];cells =[33+49 64+49 38+49];%24 does not exist
+%event = "blockend_averg_bsl"; tit = ['\fontsize{10}nest'];cells =[52 64 66 24];
 
+color = { 'r', 'k', 'b', 'w'};
 
+for i =1:numel(cells)
+    cellNr =cells(i) ; 
+    if cellNr < 29
+        animal = 'g5';plus = 0;
+    elseif cellNr < 50
+        animal = "g4";plus = 28;
+    elseif  cellNr <  62
+        animal = "g2";plus = 49;
+    elseif  cellNr > 61
+        animal = "g12";plus = 61;
+    end
+cell = events_averg.(char(animal)).(char(event))(:,cellNr-plus,:); 
+%cell =events_averg.(char(animal)).(char(event))(21:101,cellNr-plus,:);%BLOCKEND
+cNr = reshape(cell,[],size(cell,3));
+ 
+sp1 = stdshade(cNr',0.3,color{i});hold on;
+
+        %ylimits = [-3 6];xlimits = [1 61];
+        %xticks([1 11 21 31 41 51 61]);xticklabels({'-3','-2','-1','0','1','2','3'});xlabel('\fontsize{12}time [s]'); ylabel('\fontsize{12}Ca-activity (z-score)');
+
+        %ylimits = [-3 6];xlimits = [1 41];
+        %xticks([1 11 21 31 41]);xticklabels({'-1','0','1','2','3'});xlabel('\fontsize{12}time [s]'); ylabel('\fontsize{12}Ca-activity (z-score)');
+
+        %ylimits = [-3 6];xlimits = [1 81];
+        %xticks([1 11 21 31 41 51 61 71 81]);xticklabels({'-1','0','1','2','3', '4', '5','6', '7'});xlabel('\fontsize{12}time [s]'); ylabel('\fontsize{12}Ca-activity (z-score)');
+        
+        ylimits = [-3 6];xlimits = [1 31];
+        xticks([1 11 21 31]);xticklabels({'-3','-2','-1', '0'});xlabel('\fontsize{12}time [s]'); ylabel('\fontsize{12}Ca-activity (z-score)'); 
+        
+        ax = gca;ax.FontSize = 10;
+        ylim(ylimits);xlim(xlimits);
+        title(tit);
+        
+end
+hold off;
+
+%Position settings
+%nest 0.13,0.425,0.1360,0.15
+%drink 0.13,0.425,0.102,0.15
+%social 0.13,0.425,0.068,0.15
+%entries 0.13,0.425,0.051,0.15
 
 %% raw traces of cells
-enter = 2337;%ef 2361 pellet 2303 leave social
-c1 = ci_data.bsl.g5.d_2022_09_08(17).session.raw_f_res(enter-200:enter+100,4);z_c1 = (c1-nanmean(c1(1:50,1)))/nanstd(c1(1:50,1));
-c2 = ci_data.bsl.g5.d_2022_09_08(17).session.raw_f_res(enter-200:enter+100,8);z_c2 = (c2-nanmean(c2(1:50,1)))/nanstd(c2(1:50,1));
-c3 = ci_data.bsl.g5.d_2022_09_08(17).session.raw_f_res(enter-200:enter+100,6);z_c3 = (c3-nanmean(c3(1:50,1)))/nanstd(c3(1:50,1));
-c4 = ci_data.bsl.g5.d_2022_09_08(17).session.raw_f_res(enter-200:enter+100,2);z_c4 = (c4-nanmean(c4(1:50,1)))/nanstd(c4(1:50,1));
+enter = 5217;%ef 2361 pellet 2303 leave social
+s= 9; cells = [107-61 101-61 78-61];
+raw_f_res =ci_data.bsl.g12.d_2023_03_01(s).session.raw_f_res;
+Fneu = ci_data.bsl.g12.d_2023_03_01(s).session.Fneu;
+subneuro_trace = subneuro(raw_f_res,Fneu,0.8); % subtracts neuropil trace from raw trace by factor x subneuro(rawF, Fneuropil, factor)
+subneuro_trace(:,(size(subneuro_trace,2)+1)) = mean(Fneu,2);%last "cell" is mean neuropil trace
+df_f_trace = dFoF(subneuro_trace);%df/f
+raw_f= zscore(df_f_trace,0,1);% zscored using sample sd
+
+c1 = df_f_trace(enter-200:enter+100,cells(1));z_c1 = (c1-nanmean(c1(1:50,1)))/nanstd(c1(1:50,1));
+c2 = df_f_trace(enter-200:enter+100,cells(2));z_c2 = (c2-nanmean(c2(1:50,1)))/nanstd(c2(1:50,1));
+c3 = df_f_trace(enter-200:enter+100,cells(3));z_c3 = (c3-nanmean(c3(1:50,1)))/nanstd(c3(1:50,1));
+
+z_c1 = raw_f(enter-200:enter+100,cells(1));
+z_c2 = raw_f(enter-200:enter+100,cells(2));
+z_c3 = raw_f(enter-200:enter+100,cells(3));
+
+%c4 = df_f_trace(enter-200:enter+100,cells(4));z_c4 = (c4-nanmean(c4(1:50,1)))/nanstd(c4(1:50,1));
 %x-nanmean(b)/nanstd(b)
-exmpl_ed = table(smooth(zscore(c1)), smooth(zscore(c2)), smooth(zscore(c3)), smooth(zscore(c4)));
+%exmpl_ed = table(smooth(zscore(c1)), smooth(zscore(c2)), smooth(zscore(c3)), smooth(zscore(c4)));
 %figure; stackedplot(exmpl_ed);
 figure;set(0,'defaultAxesFontSize',13);
 %plot(smooth(zscore(c40_ed)));hold on;plot(smooth(zscore(c52_ed)));plot(smooth(zscore(c56_ed)));plot(smooth(zscore(c54_ed)));
-p1=plot(smooth(z_c1));hold on;p2=plot(smooth(z_c2));p3=plot(smooth(z_c3));%p4=plot(smooth(z_c54));
+p1=plot(smooth(z_c1),'LineWidth',5);hold on;p2=plot(smooth(z_c2),'LineWidth',5);p3=plot(smooth(z_c3),'LineWidth',5); %p4=plot(smooth(z_c4));
 p1.LineWidth=1;p2.LineWidth=1;p3.LineWidth=1;%p4.LineWidth=1;
-xl= xline(200,'-','entry food');xl.LineWidth = 1; 
-xxl = xline(200+24,'-','cons food');xxl.LineWidth = 1;
-xxxl = xline(200-34,'-','exit social');xxxl.LineWidth = 1;
-xticks([0 50 100 150 200 250 300]);xticklabels({'-20','-15','-10','-5','0','5','10'});xlabel('\fontsize{12}time [s]');xlim([0 300]);
-ylabel('\fontsize{12}Ca-activity (z-scored, s.d.)');xlim([0 300]);
-legend({'\fontsize{12}c4 (eat ex)','\fontsize{12}c8 (eat ex)', '\fontsize{12}c6 (ef/eat inh)'}, Location="northwest");
-
-
-enter = 1606;
-c1 = ci_data.bsl.g4.d_2022_09_02(4).session.raw_f_res(enter-100:enter+100,4);z_c1 = (c1-nanmean(c1(1:50,1)))/nanstd(c1(1:50,1));
-c2 = ci_data.bsl.g4.d_2022_09_02(4).session.raw_f_res(enter-100:enter+100,14);z_c2 = (c2-nanmean(c2(1:50,1)))/nanstd(c2(1:50,1));
-c3 = ci_data.bsl.g4.d_2022_09_02(4).session.raw_f_res(enter-100:enter+100,16);z_c3 = (c3-nanmean(c3(1:50,1)))/nanstd(c3(1:50,1));
-c4 = ci_data.bsl.g4.d_2022_09_02(4).session.raw_f_res(enter-100:enter+100,20);z_c4 = (c4-nanmean(c4(1:50,1)))/nanstd(c4(1:50,1));
-%x-nanmean(b)/nanstd(b)
-exmpl_ed = table(smooth(zscore(c1)), smooth(zscore(c2)), smooth(zscore(c3)), smooth(zscore(c4)));
-%figure; stackedplot(exmpl_ed);
-figure;set(0,'defaultAxesFontSize',13);
-%plot(smooth(zscore(c40_ed)));hold on;plot(smooth(zscore(c52_ed)));plot(smooth(zscore(c56_ed)));plot(smooth(zscore(c54_ed)));
-p1=plot(smooth(z_c1));hold on;p2=plot(smooth(z_c2));p3=plot(smooth(z_c3));p4=plot(smooth(z_c4));
-p1.LineWidth=1;p2.LineWidth=1;p3.LineWidth=1;p4.LineWidth=1;
-xl= xline(199,'-','entry drink');xl.LineWidth = 1; 
-xxl= xline(199+20,'-','drink');xxl.LineWidth = 1;
-xxxl= xline(200+263,'-','exit drink');xxxxl.LineWidth = 1;
-xticks([0 50 100 150 200 250 300]);xticklabels({'-20','-15','-10','-5','0','5','10'});xlabel('\fontsize{12}time [s]')
-ylabel('\fontsize{12}Ca-activity (z-scored, s.d.)');xlim([0 300]);
-legend({'\fontsize{12}c40','\fontsize{12}c50', '\fontsize{12}c52', '\fontsize{12}c56'}, Location="northwest");
-
-
-
-enter = 6847;s=5;pluswin =500;
-c1 = ci_data.bsl.g5.d_2022_09_27(s).session.raw_f_res(enter-100:enter+pluswin,4);z_c1 = (c1-nanmean(c1(1:50,1)))/nanstd(c1(1:50,1));
-c2 = ci_data.bsl.g5.d_2022_09_27(s).session.raw_f_res(enter-100:enter+pluswin,14);z_c2 = (c2-nanmean(c2(1:50,1)))/nanstd(c2(1:50,1));
-c3 = ci_data.bsl.g5.d_2022_09_27(s).session.raw_f_res(enter-100:enter+pluswin,16);z_c3 = (c3-nanmean(c3(1:50,1)))/nanstd(c3(1:50,1));
-c4 = ci_data.bsl.g5.d_2022_09_27(s).session.raw_f_res(enter-100:enter+pluswin,20);z_c4 = (c4-nanmean(c4(1:50,1)))/nanstd(c4(1:50,1));
-%x-nanmean(b)/nanstd(b)
-exmpl_ed = table(smooth(zscore(c1)), smooth(zscore(c2)), smooth(zscore(c3)), smooth(zscore(c4)));
-%figure; stackedplot(exmpl_ed);
-figure;set(0,'defaultAxesFontSize',13);
-%plot(smooth(zscore(c40_ed)));hold on;plot(smooth(zscore(c52_ed)));plot(smooth(zscore(c56_ed)));plot(smooth(zscore(c54_ed)));
-p1=plot(smooth(z_c1));hold on;p2=plot(smooth(z_c2));p3=plot(smooth(z_c3));p4=plot(smooth(z_c4));
-p1.LineWidth=1;p2.LineWidth=1;p3.LineWidth=1;p4.LineWidth=1;
-xl= xline(100,'-','entry drink');xl.LineWidth = 1; 
-xxl= xline(100+35,'-','drink');xxl.LineWidth = 1;
-xxxl= xline(100+165,'-','exit drink');xxxl.LineWidth = 1;
-xxxxl= xline(100+186,'-','entry food');xxxxl.LineWidth = 1;
-xxxxxl= xline(100+390,'-','eat');xxxxxl.LineWidth = 1;
-xticks([0 100 200 300 400 500 600]);xticklabels({'0','10','20','30','40','50','60'});xlabel('\fontsize{12}time [s]')
-ylabel('\fontsize{12}Ca-activity (z-scored, s.d.)');xlim([0 600]);
-legend({'\fontsize{12}c4','\fontsize{12}c14', '\fontsize{12}c16', '\fontsize{12}c20'}, Location="northwest");
-
-
-
-enter = 6847;s=5;pluswin =50;minuswin = 50;
-c1 = ci_data.bsl.g5.d_2022_09_27(s).session.raw_f_res(enter-minuswin:enter+pluswin,4);z_c1 = (c1-nanmean(c1(1:50,1)))/nanstd(c1(1:50,1));
-c2 = ci_data.bsl.g5.d_2022_09_27(s).session.raw_f_res(enter-minuswin:enter+pluswin,14);z_c2 = (c2-nanmean(c2(1:50,1)))/nanstd(c2(1:50,1));
-c3 = ci_data.bsl.g5.d_2022_09_27(s).session.raw_f_res(enter-minuswin:enter+pluswin,16);z_c3 = (c3-nanmean(c3(1:50,1)))/nanstd(c3(1:50,1));
-c4 = ci_data.bsl.g5.d_2022_09_27(s).session.raw_f_res(enter-minuswin:enter+pluswin,20);z_c4 = (c4-nanmean(c4(1:50,1)))/nanstd(c4(1:50,1));
-%x-nanmean(b)/nanstd(b)
-exmpl_ed = table(smooth(zscore(c1)), smooth(zscore(c2)), smooth(zscore(c3)), smooth(zscore(c4)));
-%figure; stackedplot(exmpl_ed);
-figure;set(0,'defaultAxesFontSize',13);
-%plot(smooth(zscore(c40_ed)));hold on;plot(smooth(zscore(c52_ed)));plot(smooth(zscore(c56_ed)));plot(smooth(zscore(c54_ed)));
-p1=plot(smooth(z_c1));hold on;p2=plot(smooth(z_c2));p3=plot(smooth(z_c3));p4=plot(smooth(z_c4));
-p1.LineWidth=1;p2.LineWidth=1;p3.LineWidth=1;p4.LineWidth=1;
-xl= xline(50,'-','entry drink');xl.LineWidth = 1; 
-xxl= xline(50+35,'-','drink');xxl.LineWidth = 1;
-%xxxl= xline(100+165,'-','exit drink');xxxl.LineWidth = 1;
-%xxxxl= xline(100+186,'-','entry food');xxxxl.LineWidth = 1;
-%xxxxxl= xline(100+390,'-','eat');xxxxxl.LineWidth = 1;
-xticks([0 10 20 30 40 50 60 70 80 90 100 110 120 130 140 150]);xticklabels({'-5','-4','-3','-2','-1','0','1','2','3','4','5'});xlabel('\fontsize{12}time [s]')
-ylabel('\fontsize{12}Ca-activity (z-scored, s.d.)');xlim([0 100]);
-%legend({'\fontsize{12}c4','\fontsize{12}c14', '\fontsize{12}c16', '\fontsize{12}c20'}, Location="northwest");
-
-
+xl= xline(200-25,'-','entry food');xl.LineWidth = 1; 
+xxl = xline(200+19,'-','eat');xxl.LineWidth = 1;
+xxxl = xline(200-93,'-','drink');xxxl.LineWidth = 1;
+%xxxxl = xline(200-45,'-','exit drink');xxxxl.LineWidth = 1;
+xticks([0+25 50+25 100+25 150+25 200+25 250+25 300+25]);xticklabels({'-15','-10','-5','0','5','10','15'});xlabel('\fontsize{12}time [s]');xlim([0 300]);
+ylabel('\fontsize{12}Ca-activity (z-scored, s.d.)');ylim([-2 9]);
+legend({'\fontsize{12}c1','\fontsize{12}c2', '\fontsize{12}c3'}, Location="northwest");
 
 %% imgsc plots of individual cells
-cellNr =7; tit = ['\fontsize{14}social cell'];%30 42
-cell = events_averg.g4.soc_averg_bsl(:,cellNr,:); 
+%cellNr =100 ; tit = ['\fontsize{14}drink cell'];%30 42
+cellNr =76 ; tit = ['\fontsize{14}eat cell'];%30 42
+if cellNr < 29
+    animal = 'g5';plus = 0;
+elseif cellNr < 50
+    animal = "g4";plus = 28;
+elseif  cellNr <  62
+    animal = "g2";plus = 49;
+elseif  cellNr > 61
+    animal = "g12";plus = 61;
+end    
+
+cell = events_averg.(char(animal)).eat_averg_bsl(:,cellNr-plus,:); 
+%cell = events_averg.(char(animal)).ed_averg_bsl([21:101],cellNr-plus,:);
 cNr = reshape(cell,[],size(cell,3));
-cNr = cNr(:,1:end);
+%cNr = cNr(:,1:end);
 
-%lim = [-1 9];3
+lim = [-2 8];
 fA = figure;
-figure(fA);hold on;
-        s1= subplot(2,1,1);imagesc([0:3],[1:size(cNr,2)],cNr');xlim([0 3]);
-        title(tit);xticklabels({'','','','','','',''});ylabel('\fontsize{12}Trials');
-        c = colorbar(s1,'Position',[0.93 0.583837209302326 0.022 0.341162790697675]);
-        s2= subplot(2,1,2);stdshade(cNr',0.3,[0 0 1]);
-        xticklabels({'-3','-2','-1','0','1','2','3'});xlabel('\fontsize{12}time [s]')
-        ylabel('\fontsize{12}Ca-activity (z-score)');
-        set(s2, 'Position', [0.13,0.38,0.775,0.20]);
-
+figure(fA);
+        s1= subplot(2,1,1);imagesc([1 61],1:size(cNr,2),cNr');clim(lim);xlim([1 61]);hold on;
+        title(tit);xticklabels({'','','','','','',''});ylabel('\fontsize{10}Trials');
+        set(s1, 'Position', [0.13,0.35,0.28,0.53]); c = colorbar(s1,'Position',[0.43,0.35,0.01,0.53]);
+        
+        s2= subplot(2,1,2);stdshade(cNr',0.3,[0 0 1]);xlim([1 61]);ylim([-2 4]);
+        xticks([1 11 21 31 41 51 61])
+        xticklabels({'-3','-2','-1','0', '1', '2','3'});xlabel('\fontsize{12}time [s]')
+        ylabel('\fontsize{7}Ca-activity (z-score)');
+        set(s2, 'Position', [0.13,0.14,0.28,0.2]);
+        
 
 %% imgsc plots of averages
-% entries
+% sort cells acording to amplitude in event window for plotting
+SortedEvents = events_averg.allSort;
+fn= fieldnames(SortedEvents);
+% give all cells a label %sort cells according to value in event window
+
+for i= 1:(numel(fn))
+    SortedEvents.(fn{i})=SortedEvents.(fn{i})(SortedEvents.(fn{i}) ~= 0);% removes non existant tirals again
+    label = [1:size(SortedEvents.(fn{i}),2)];
+    clear temp order;
+    SortedEvents.(fn{i})(2,:) = label;
+    [temp, order] = sort(SortedEvents.(fn{i})(1,:));% sorted according to evt window value 
+    SortedEvents.(fn{i}) = SortedEvents.(fn{i})(:,order);
+    SortedEventsList(i,1:(size(SortedEvents.(fn{i}),2)))= SortedEvents.(fn{i})(2,:);
+end
+
+% sort averg traces according to SortedEventsList
+events_averg.allAsc = events_averg.all;
+fn = fieldnames(events_averg.allAsc);
+events_averg.allAsc = rmfield(events_averg.allAsc,fn(20:41));events_averg.allAsc = rmfield(events_averg.allAsc,fn(17));
+events_averg.allAsc.home = events_averg.allAsc.be;
+events_averg.allAsc.drink_antic = events_averg.allAsc.drink;
+events_averg.allAsc.eat_antic = events_averg.allAsc.eat;
+
+fn= fieldnames(events_averg.allAsc);
+fn3 = cat(1,fn(1:5), fn(7:8), fn(10:14),fn(16:18),fn(9),fn(19),fn(20:21),fn(6),fn(15));
+ for i = 1:numel(fn3)
+    events_averg.allAscend.(fn3{i})= events_averg.allAsc.(fn3{i}); % now allAscend matches SortedEventsList
+ end    
+% move neuropil traces to beginning of SortedEventsList
+NpCells = [28 49 61 115];
+NpC = [12 66]; %only g2 and g12 trials
+for i= 1:21
+    evt = SortedEventsList(i,:);
+    if i <20 
+        [X,Y] = ismember(evt,NpCells);
+        evt(Y(X)) = [];
+        NPbegin = cat(2,NpCells,evt);% Np cells at beginning
+        SortedEventsList(i,:) = NPbegin;
+    elseif i > 19
+        [X,Y] = ismember(evt,NpC);
+        evt(Y(X)) = [];
+        NPbegin = cat(2,NpC,evt);% Np cells at beginning
+        SortedEventsList(i,:) = NPbegin;
+    end    
+end
+
+%sort allAllscend in ascending order according to SortedEventsList
+fn =fieldnames(events_averg.allAscend);
+for i = 1:(numel(fn))
+    tosort = events_averg.allAscend.(fn{i});
+    if i <20
+        for j = 1:(size(SortedEventsList(i,:),2))
+        sorted(:,j) = tosort(:,(SortedEventsList(i,j)));
+        end 
+    elseif i > 19
+        for k = 1:66
+        sorted(:,k) = tosort(:,(SortedEventsList(i,k)));
+        end 
+    end    
+    events_averg.allAsc.(fn{i}) = sorted;% averaged traces of all cells sorted in ascending order
+    clear sorted
+end    
+
+
+%% imgsc entries
 win= 30;
-lim = [-0.5 1.5];
-limaverg = [-0.3 0.5];
+lim = [-3 3];
+limaverg = [-1 1];
 f7=figure;% averages across all sessions
 figure(f7);hold on;
-subplot(2,6,1),imagesc([-win:0],[1:size(events_averg.all.ed,2)],events_averg.all.ed');xline(-20,'--b');
-        trials = sort(table2array(Trialnumbers(1,:)));trials(trials == 0) = []; 
+sp11 = subplot(2,6,1),imagesc([-win:0],[1:size(events_averg.allAsc.ed,2)],events_averg.allAsc.ed');xline(-20,'--b');yline(4.5,'-w');left=0.13; width=0.051; btw= 0.0325;
+        trials = sort(table2array(Trialnumbers(1,:)));trials(trials == 0) = []; set(sp11, 'Position',[left,0.58,width,0.34]);
         title(['\fontsize{10}enter drink',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);clim(lim);
-        xticklabels({' ',' ',' ',''});ylabel('\fontsize{15}Cells');
-        sp1= subplot(2,6,7); stdshade(events_averg.all.ed',0.3,[0 0 1]);set(sp1, 'Position', [0.13,0.43,0.102,0.15]);
-        xticks([1 11 21 31]);xticklabels({'-3','-2','-1','0'});xlabel('\fontsize{12}time [s]'); ylabel('\fontsize{12}Ca-activity (z-scored)');
-        ylim(limaverg);
-subplot(2,6,2),imagesc([-win:0],[1:size(events_averg.all.ef,2)],events_averg.all.ef');xline(-20,'--b');
-        trials = sort(table2array(Trialnumbers(2,:)));trials(trials == 0) = []; 
-        title(['\fontsize{10}enter drink',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);clim(lim);
+        xticklabels({' ',' ',' ',''});ylabel('\fontsize{15}Cells'); 
+        
+        sp1= subplot(2,6,7); stdshade(events_averg.allAsc.ed',0.3,[0 0 1]);set(sp1, 'Position', [left,0.425,width,0.15]);hold on
+            stdshade(events_averg_ch.allAsc.ed',0.3,[1 1 1]);
+            xticks([1 11 21 31]);xticklabels({'-3','-2','-1','0'});xlabel('\fontsize{12}time [s]'); ylabel('\fontsize{12}Ca-activity (z-scored)');
+            ylim(limaverg);hold off
+
+sp22 = subplot(2,6,2),imagesc([-win:0],[1:size(events_averg.allAsc.ef,2)],events_averg.allAsc.ef');xline(-20,'--b');yline(4.5,'-w');left =left+width+btw;
+        trials = sort(table2array(Trialnumbers(2,:)));trials(trials == 0) = []; set(sp22, 'Position',[left,0.58,width,0.34]);
+        title(['\fontsize{10}enter food',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);clim(lim);
         xticklabels({' ',' ',' ',''});
-        sp2= subplot(2,6,8); stdshade(events_averg.all.ef',0.3,[0 0 1]);set(sp2, 'Position', [0.2645,0.43,0.102,0.15]);
-        xticks([1 11 21 31]);xticklabels({'-3','-2','-1','0'});
+        sp2= subplot(2,6,8); stdshade(events_averg.allAsc.ef',0.3,[0 0 1]);set(sp2, 'Position', [left,0.425,width,0.15]);hold on
+        stdshade(events_averg_ch.allAsc.ef',0.3,[1 1 1]);hold off
+        xticks([1 11 21 31]);xticklabels({'-3','-2','-1','0'});xtickangle(0);
         ylim(limaverg);
-subplot(2,6,3),imagesc([-win:0],[1:size(events_averg.all.es,2)],events_averg.all.es');xline(-20,'--b');
-        trials = sort(table2array(Trialnumbers(3,:)));trials(trials == 0) = []; 
-        title(['\fontsize{10}enter drink',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);clim(lim);
+sp33= subplot(2,6,3),imagesc([-win:0],[1:size(events_averg.allAsc.es,2)],events_averg.allAsc.es');xline(-20,'--b');yline(4.5,'-w');left =left+width+btw;
+        trials = sort(table2array(Trialnumbers(3,:)));trials(trials == 0) = []; set(sp33, 'Position',[left,0.58,width,0.34]);
+        title(['\fontsize{10}enter social',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);clim(lim);
          xticklabels({' ',' ',' ',''});xlabel('\fontsize{15}time [s]');
-        sp3= subplot(2,6,9); stdshade(events_averg.all.es',0.3,[0 0 1]);set(sp3, 'Position', [0.3991,0.43,0.102,0.15]);
-        xticks([1 11 21 31]);xticklabels({'-3','-2','-1','0'});
+        sp3= subplot(2,6,9); stdshade(events_averg.allAsc.es',0.3,[0 0 1]);set(sp3, 'Position', [left,0.425,width,0.15]);hold on
+        stdshade(events_averg_ch.allAsc.es',0.3,[1 1 1]);hold off
+        xticks([1 11 21 31]);xticklabels({'-3','-2','-1','0'});xtickangle(0);
         ylim(limaverg);
-subplot(2,6,4),imagesc([-win:0],[1:size(events_averg.all.ee,2)],events_averg.all.ee');xline(-20,'--b');
-        trials = sort(table2array(Trialnumbers(5,:)));trials(trials == 0) = []; 
-        title(['\fontsize{10}enter drink',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);clim(lim);
+sp44=subplot(2,6,4),imagesc([-win:0],[1:size(events_averg.allAsc.ee,2)],events_averg.allAsc.ee');xline(-20,'--b');yline(4.5,'-w');left =left+width+btw;
+        trials = sort(table2array(Trialnumbers(5,:)));trials(trials == 0) = []; set(sp44, 'Position',[left,0.58,width,0.34]);
+        title(['\fontsize{10}enter explore',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);clim(lim);
          xticklabels({' ',' ',' ',''});
-        sp4= subplot(2,6,10); stdshade(events_averg.all.ee',0.3,[0 0 1]);set(sp4, 'Position', [0.5336,0.43,0.102,0.15]);
-        xticks([1 11 21 31]);xticklabels({'-3','-2','-1','0'});
+        sp4= subplot(2,6,10); stdshade(events_averg.allAsc.ee',0.3,[0 0 1]);set(sp4, 'Position', [left,0.425,width,0.15]);hold on
+        stdshade(events_averg_ch.allAsc.ee',0.3,[1 1 1]);hold off
+        xticks([1 11 21 31]);xticklabels({'-3','-2','-1','0'});xtickangle(0);
         ylim(limaverg);
-subplot(2,6,5),imagesc([-win:0],[1:size(events_averg.all.er,2)],events_averg.all.er');xline(-20,'--b');
-        trials = sort(table2array(Trialnumbers(6,:)));trials(trials == 0) = []; 
-        title(['\fontsize{10}enter drink',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);clim(lim);
+sp55=subplot(2,6,5),imagesc([-win:0],[1:size(events_averg.allAsc.er,2)],events_averg.allAsc.er');xline(-20,'--b');yline(2.5,'-w');left =left+width+btw;
+        trials = sort(table2array(Trialnumbers(6,:)));trials(trials == 0) = []; set(sp55, 'Position',[left,0.58,width,0.34]);
+        title(['\fontsize{10}enter run',' trials: 26 ']);clim(lim);
         xticklabels({'-3','-2','-1',' '});
-        sp5= subplot(2,6,11); stdshade(events_averg.all.er',0.3,[0 0 1]);set(sp5, 'Position', [0.6682,0.43,0.102,0.15]);
-        xticks([1 11 21 31]);xticklabels({'-3','-2','-1','0'});
+        sp5= subplot(2,6,11); stdshade(events_averg.allAsc.er',0.3,[0 0 1]);set(sp5, 'Position', [left,0.425,width,0.15]);hold on
+        stdshade(events_averg_ch.allAsc.er',0.3,[1 1 1]);hold off
+        xticks([1 11 21 31]);xticklabels({'-3','-2','-1','0'});xtickangle(0);
         ylim(limaverg);
-subplot(2,6,6),imagesc([-win:0],[1:size(events_averg.all.be(1:31,:),2)],events_averg.all.be(1:31,:)');xline(-20,'--b');
-        trials = sort(table2array(Trialnumbers(9,:)));trials(trials == 0) = []; 
-        title(['\fontsize{10}enter drink',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);clim(lim);
+sp66=subplot(2,6,6),imagesc([-win:0],[1:size(events_averg.allAsc.be(1:31,:),2)],events_averg.allAsc.be(1:31,:)');xline(-20,'--b');yline(4.5,'-w');left =left+width+btw;
+        trials = sort(table2array(Trialnumbers(9,:)));trials(trials == 0) = []; set(sp66, 'Position',[left,0.58,width,0.34]);
+        title(['\fontsize{10}block end',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);clim(lim);
         xticks([-30 -20 -10 0]); xticklabels({' ',' ',' ',' '});
-        sp6= subplot(2,6,12); stdshade((events_averg.all.be(1:31,:))',0.3,[0 0 1]);set(sp6, 'Position', [0.8027,0.43,0.102,0.15]);
-        xticks([1 11 21 31]);xticklabels({'-3','-2','-1','0'});
+        sp6= subplot(2,6,12); stdshade((events_averg.allAsc.be(1:31,:))',0.3,[0 0 1]);set(sp6, 'Position', [left,0.425,width,0.15]);hold on
+        stdshade((events_averg_ch.allAsc.be(1:31,:))',0.3,[1 1 1]);hold off
+        xticks([1 11 21 31]);xticklabels({'-3','-2','-1','0'});xtickangle(0);
         ylim(limaverg);
-        h = axes(f7,'visible','off');
-        c = colorbar(h,'Position',[0.93 0.425 0.022 0.5]);
+        h = axes(f7,'visible','off');left =left+width+btw;
+        c = colorbar(h,'Position',[left 0.425 0.01 0.49]);
         ylabel(c,'Ca+-response (z-scored, s.d.)','FontSize',10,'Rotation',270);
-        c.Label.Position(1) = 3.2;
+        c.Label.Position(1) = 4;
         caxis(h,lim);
 
 
-%% consumption
+%% imgsc consumption
+win= 30;
 lim = [-3 3];limaverg2= [-1 1];
-f9=figure;% averages across all sessions
+f9=figure;% averages across all sessions [xLeft, yBottom, width, height]
 figure(f9);hold on;
-subplot(2,4,1),imagesc([-win:win],[1:size(events_averg.all.drink,2)],events_averg.all.drink');xline(0,'--w');
-        title(['\fontsize{10}drink',' trials: 46-70']);clim(lim)
+
+sp1 = subplot(2,6,1);imagesc([-win:win],[1:size(events_averg.allAsc.drink,2)],events_averg.allAsc.drink');xline(1,'--w');xline(-20,'--b');yline(4.5,'-w');left=0.13; btw =0.0325; width1 = 0.0170;
+        trials = sort(table2array(Trialnumbers(7,:)));trials(trials == 0) = [];set(sp1, 'Position',[left,0.58,width1*6,0.34]);
+        title(['\fontsize{10}drink',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);clim(lim)
         xticks([1 11 21 31 41 51 61]); xticklabels({'-3','-2','-1','0','1','2','3'});;ylabel('\fontsize{15}Cells');xlabel('\fontsize{15}time [s]');
-        sp7= subplot(2,4,5), stdshade(events_averg.all.drink',0.3,[0 0 1]);set(sp7, 'Position', [0.13,0.43,0.1566,0.15]);
+        sp7= subplot(2,6,7); stdshade(events_averg.allAsc.drink',0.3,[0 0 1]);set(sp7, 'Position',[left,0.425,width1*6,0.15]);hold on
+        stdshade(events_averg_ch.allAsc.drink',0.3,[1 1 1]);hold off
         xticks([1 11 21 31 41 51 61]);xticklabels({'-3','-2','-1','0','1','2','3'});xlabel('\fontsize{12}time [s]'); ylabel('\fontsize{12}Ca-activity (z-score)');
-        ylim(limaverg2);
-subplot(2,4,2),imagesc([-win:win],[1:size(events_averg.all.eat,2)],events_averg.all.eat');xline(0,'--w');
-        title(['\fontsize{10}retrieve pellet',' trials: 35-97']);clim(lim)
+        ylim(limaverg2);yticks([-1 -0.5 0 0.5 1]);yticklabels({'','-0.5','0','0.5',''});xtickangle(0);
+
+sp2 =subplot(2,6,2);imagesc([-win:win],[1:size(events_averg.allAsc.eat,2)],events_averg.allAsc.eat');xline(1,'--w');yline(4.5,'-w');xline(-20,'--b');left =left+width1*6+btw;
+        trials = sort(table2array(Trialnumbers(8,:)));trials(trials == 0) = [];set(sp2, 'Position',[left,0.58,width1*6,0.34]);
+        title(['\fontsize{10}eat',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);clim(lim)
         xticks([1 11 21 31 41 51 61]);xticklabels({'-3','-2','-1','0','1','2','3'});
-        sp8= subplot(2,4,6), stdshade(events_averg.all.eat',0.3,[0 0 1]);set(sp8, 'Position', [0.3361,0.43,0.1566,0.15]);
+        sp8= subplot(2,6,8); stdshade(events_averg.allAsc.eat',0.3,[0 0 1]);set(sp8, 'Position', [left,0.425,width1*6,0.15]);hold on
+        stdshade(events_averg_ch.allAsc.eat',0.3,[1 1 1]);hold off
         xticks([1 11 21 31 41 51 61]);xticklabels({'-3','-2','-1','0','1','2','3'});
-        ylim(limaverg2);
-subplot(2,4,3),imagesc([0:win],[1:size(events_averg.all.soc,2)],events_averg.all.soc');
-        title(['\fontsize{10}social interaction',' trials: 75-148']);clim(lim)
-        xticks([1 11 21 31]); xticklabels({' ','1','2',' '});
-        sp9= subplot(2,4,7), stdshade(events_averg.all.soc',0.3,[0 0 1]);set(sp9, 'Position', [0.5422,0.43,0.1566,0.15]);
-        xticks([1 11 21 31]);xticklabels({'0','1','2','3'}); 
-        ylim(limaverg2);
-subplot(2,4,4),imagesc([0:100],[1:size(events_averg.all.be(31:131,:),2)],events_averg.all.be(31:131,:)');xline(0,'--w');
-        title(['\fontsize{10}home',' trials: 10-71']);clim(lim)
-        xticks([1 21 41 61 81 101]);xticklabels({' ','2','4','6','8',' '});
-        sp10= subplot(2,4,8); stdshade((events_averg.all.be(31:131,:))',0.3,[0 0 1]);set(sp10, 'Position', [0.7484,0.43,0.1566,0.15]);
-        xticks([1 21 41 61 81 101]);xticklabels({'0','2','4','6','8','10'});
-        ylim(limaverg2);
-        h = axes(f9,'visible','off');
-        c = colorbar(h,'Position',[0.93 0.45 0.02 0.45]);
+        ylim(limaverg2);yticks([-1 -0.5 0 0.5 1]);yticklabels({'','-0.5','0','0.5',''});xtickangle(0);
+
+sp3 =subplot(2,6,3);imagesc([1:41],[1:size(events_averg.allAsc.soc,2)],events_averg.allAsc.soc');yline(4.5,'-w');xline(11,'--b'); xline(11.2,'--w');left =left+width1*6+btw;
+        trials = sort(table2array(Trialnumbers(4,:)));trials(trials == 0) = [];set(sp3, 'Position',  [left,0.58,width1*4,0.34]);
+        title(['\fontsize{10}social',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);clim(lim)
+        xticks([1 11 21 31 41]); xticklabels({' ',' ','1','2',' '});
+        sp9= subplot(2,6,9); stdshade(events_averg.allAsc.soc',0.3,[0 0 1]);set(sp9, 'Position',  [left,0.425,width1*4,0.15]);hold on
+        stdshade(events_averg_ch.allAsc.soc',0.3,[1 1 1]);hold off
+        xlim([1 41]) ;xticks([1 11 21 31 41]);xticklabels({'-1','0','1','2','3'}); 
+        ylim(limaverg2);yticks([-1 -0.5 0 0.5 1]);yticklabels({'','-0.5','0','0.5',''});xtickangle(0);
+
+
+sp4 =subplot(2,6,4);imagesc([1:41],[1:size(events_averg.allAsc.expl,2)],events_averg.allAsc.expl');yline(4.5,'-w');xline(11,'--b'); xline(11.2,'--w');left =left+width1*4+btw;
+        trials = sort(table2array(Trialnumbers(16,:)));trials(trials == 0) = [];set(sp4, 'Position',[left,0.58,width1*4,0.34]);
+        title(['\fontsize{10}explore',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);clim(lim); 
+        xticks([1 11 21 31 41]); xticklabels({' ',' ','1','2',' '});
+        sp10= subplot(2,6,10); stdshade(events_averg.allAsc.expl',0.3,[0 0 1]);set(sp10, 'Position',[left,0.425,width1*4,0.15]);hold on
+        stdshade(events_averg_ch.allAsc.expl',0.3,[1 1 1]);hold off
+        xlim([1 41]) ;xticks([1 11 21 31 41]);xticklabels({'-1','0','1','2','3'}); 
+    ylim(limaverg2);yticks([-1 -0.5 0 0.5 1]);yticklabels({'','-0.5','0','0.5',''});  xtickangle(0);  
+
+
+sp5 =subplot(2,6,5);imagesc([-win:win],[1:size(events_averg.allAsc.run(:,[2 13:end]),2)],events_averg.allAsc.run(:,[2 13:end])');xline(1,'--w');yline(1.5,'-w');xline(-20,'--b');left =left+width1*4+btw;
+        trials = sort(table2array(Trialnumbers(15,:)));trials(trials == 0) = [];set(sp5, 'Position',[left,0.58,width1*6,0.34]);
+        title(['\fontsize{10}run',' trials: ', num2str(trials(1,1))]);clim(lim)
+        xticks([1 11 21 31 41 51 61]);xticklabels({'-3','-2','-1','0','1','2','3'});
+        sp11= subplot(2,6,11); stdshade(events_averg.allAsc.run(:,[2 13:end])',0.3,[0 0 1]);set(sp11, 'Position', [left,0.425,width1*6,0.15]);hold on
+        stdshade(events_averg_ch.allAsc.run',0.3,[1 1 1]);hold off
+        xlim([1 61]);xticks([1 11 21 31 41 51 61]);xticklabels({'-3','-2','-1','0','1','2','3'});
+        ylim(limaverg2);yticks([-1 -0.5 0 0.5 1]);yticklabels({'','-0.5','0','0.5',''});xtickangle(0);
+
+sp6 =subplot(2,6,6);imagesc([1:81],1:size(events_averg.allAsc.home,2),events_averg.allAsc.home(21:101,:)');yline(4.5,'-w');xline(11,'--w');left =left+width1*6+btw;
+        trials = sort(table2array(Trialnumbers(9,:)));trials(trials == 0) = [];set(sp6, 'Position',[left,0.58,width1*8,0.34]);
+        title(['\fontsize{10}nest',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);clim(lim)
+        xlim([1 81]);xticks([1 11 21 31 41 51 61 71 81]);xticklabels({' ','2','4','6','8',' ',' ',' ',' '});
+        sp12= subplot(2,6,12); stdshade((events_averg.allAsc.home(21:101,:))',0.3,[0 0 1]);set(sp12, 'Position', [left,0.425,width1*8,0.15]);hold on
+        stdshade((events_averg_ch.allAsc.home(21:101,:))',0.3,[1 1 1]);hold off
+        xlim([1 81]);xticks([1 11 21 31 41 51 61 71 81]);xticklabels({'-1','0','1','2','3','4','5','6','7'});linkaxes([sp6, sp12],'x');
+        ylim(limaverg2); yticks([-1 -0.5 0 0.5 1]);yticklabels({'','-0.5','0','0.5',''});xtickangle(0);
+
+        h = axes(f9,'visible','off');left =left+width1*8+btw;
+        c = colorbar(h,'Position',[left 0.425 0.01 0.49]);
         ylabel(c,'Ca+-response (z-scored, s.d.)','FontSize',10,'Rotation',270);
-        c.Label.Position(1) = 2.5;
+        c.Label.Position(1) = 4;
         caxis(h,lim);        
 
 
@@ -830,28 +844,28 @@ subplot(2,4,4),imagesc([0:100],[1:size(events_averg.all.be(31:131,:),2)],events_
 lim = [-3 3];limaverg2 = [-0.3 0.5];
 f10=figure;
 figure(f10);hold on;
-subplot(2,4,1),imagesc([-win:0],[1:size(events_averg.all.ed_nc,2)],events_averg.all.ed_nc');
+subplot(2,4,1),imagesc([-win:0],[1:size(events_averg.allAsc.ed_nc,2)],events_averg.allAsc.ed_nc');
         title(['\fontsize{10}enter no drink',' trials: 42']);clim(lim);
         xticks([1 11 21 31 ]); xticklabels({'-3','-2','-1','0'});;ylabel('\fontsize{15}Cells');xlabel('\fontsize{15}time [s]');
-        sp7= subplot(2,4,5); stdshade(events_averg.all.ed_nc',0.3,[0 0 1]);set(sp7, 'Position', [0.13,0.43,0.1566,0.15]);
+        sp7= subplot(2,4,5); stdshade(events_averg.allAsc.ed_nc',0.3,[0 0 1]);set(sp7, 'Position', [0.13,0.43,0.1566,0.15]);
         xticks([1 11 21 31 ]);xticklabels({'-3','-2','-1','0'});xlabel('\fontsize{12}time [s]'); ylabel('\fontsize{12}Ca-activity (z-score)');
         ylim(limaverg2);
-subplot(2,4,2),imagesc([-win:0],[1:size(events_averg.all.ed_c,2)],events_averg.all.ed_c');
+subplot(2,4,2),imagesc([-win:0],[1:size(events_averg.allAsc.ed_c,2)],events_averg.allAsc.ed_c');
         title(['\fontsize{10}enter drink',' trials: 46-82']);clim(lim);
         xticks([1 11 21 31 ]);xticklabels({'-3','-2','-1','0'});
-        sp8= subplot(2,4,6), stdshade(events_averg.all.ed_c',0.3,[0 0 1]);set(sp8, 'Position', [0.3361,0.43,0.1566,0.15]);
+        sp8= subplot(2,4,6), stdshade(events_averg.allAsc.ed_c',0.3,[0 0 1]);set(sp8, 'Position', [0.3361,0.43,0.1566,0.15]);
         xticks([1 11 21 31]);xticklabels({'-3','-2','-1','0'});
         ylim(limaverg2);
-subplot(2,4,3),imagesc([-win:0],[1:size(events_averg.all.ef_nc,2)],events_averg.all.ef_nc');
+subplot(2,4,3),imagesc([-win:0],[1:size(events_averg.allAsc.ef_nc,2)],events_averg.allAsc.ef_nc');
         title(['\fontsize{10}enter no feed',' trials: 9-73']);clim(lim);
         xticks([1 11 21 31]); xticklabels({' ','1','2',' '});
-        sp9= subplot(2,4,7); stdshade(events_averg.all.ef_nc',0.3,[0 0 1]);set(sp9, 'Position', [0.5422,0.43,0.1566,0.15]);
+        sp9= subplot(2,4,7); stdshade(events_averg.allAsc.ef_nc',0.3,[0 0 1]);set(sp9, 'Position', [0.5422,0.43,0.1566,0.15]);
         xticks([1 11 21 31 ]);xticklabels({'-3','-2','-1','0'});
         ylim(limaverg2);
-subplot(2,4,4),imagesc([-win:0],[1:size(events_averg.all.ef_c,2)],events_averg.all.ef_c');
+subplot(2,4,4),imagesc([-win:0],[1:size(events_averg.allAsc.ef_c,2)],events_averg.allAsc.ef_c');
         title(['\fontsize{10}enter feed',' trials: 34-97']);clim(lim);
         xticks([1 11 21 31 ]);xticklabels({'-3','-2','-1','0'});
-        sp10= subplot(2,4,8); stdshade(events_averg.all.ef_c',0.3,[0 0 1]);set(sp10, 'Position', [0.7484,0.43,0.1566,0.15]);
+        sp10= subplot(2,4,8); stdshade(events_averg.allAscAsc.ef_c',0.3,[0 0 1]);set(sp10, 'Position', [0.7484,0.43,0.1566,0.15]);
        xticks([1 11 21 31 ]);xticklabels({'-3','-2','-1','0'});
         ylim(limaverg2);
         h = axes(f10,'visible','off');
@@ -860,22 +874,23 @@ subplot(2,4,4),imagesc([-win:0],[1:size(events_averg.all.ef_c,2)],events_averg.a
         c.Label.Position(1) = 2.5;
         caxis(h,lim);        
 
+
 %% ethogram plots
-s=7;
-event_type=table2array(ci_data.bsl.g5.d_2022_09_27(s).session.events(:,4));
-raw_f_res =(ci_data.bsl.g5.d_2022_09_27(s).session.raw_f_res);
-df_f_trace = dFoF(raw_f_res);%df/f
-z_scored_raw= zscore(df_f_trace,0,1);
-%z_scored_raw= zscore(raw_f_res,0,1);
+s=9;animal = "g12";
+event_type=table2array(ci_data.bsl.g12.d_2023_03_01(s).session.events(:,4));
+raw_f_res =(ci_data.bsl.g12.d_2023_03_01(s).session.raw_f_res);
+Fneu = ci_data.bsl.g12.d_2023_03_01(s).session.Fneu;
 
-x = (table2array(ci_data.bsl.g5.d_2022_09_27(s).session.events(:,5)));
+subneuro_trace = subneuro(raw_f_res,Fneu,0.8); % subtracts neuropil trace from raw trace by factor x subneuro(rawF, Fneuropil, factor)
+subneuro_trace(:,(size(subneuro_trace,2)+1)) = mean(Fneu,2);%last "cell" is mean neuropil trace
+df_f_trace = dFoF(subneuro_trace);%df/f
+raw_f= zscore(df_f_trace,0,1);% zscored using sample sd
+
+x = (table2array(ci_data.bsl.g12.d_2023_03_01(s).session.events(:,5)));
 y=NaN(size(x));
-frameplot=raw_f_res;
-
-
+frameplot=raw_f;
 %y(find(event_type=='block_start'))=2;
-y(find(event_type=='imaging_start'))=2.5; 
-y(find(event_type=='imaging_stop'))=2;
+y(find(event_type=='imaging_start'))=2; 
 y(find(event_type=='enter_feed'))=4; %food entry
 y(find(event_type=='enter_run'))=3; %wheel entry
 y(find(event_type=='enter_social'))=4.5; %
@@ -889,7 +904,7 @@ pel=x(find(event_type=='retrieve_pellet'));
 drink=x(find(event_type=='drink'));
 run=x(find(event_type=='run'));
 %exit
-y(find(event_type=='block_end'))=2.5;
+y(find(event_type=='block_end'))=2;
 y(find(event_type=='imaging_stop'))=2;
 y(find(event_type=='exit_feed'))=3.5;
 y(find(event_type=='exit_drink'))=3.5;
@@ -897,41 +912,211 @@ y(find(event_type=='exit_run'))=3.5;
 y(find(event_type=='exit_social'))=3.5;
 y(find(event_type=='exit_explore'))=3.5;
 
-
 yy=fillmissing(y,'linear');
 
 figure;a=1;
 subplot(1,1,a),plot([x(1) x(end)],[3.5 3.5],'b');hold on%decisionpoint
-subplot(1,1,a),plot([x(1) x(end)],[2 2],'b');%nest
+%subplot(1,1,a),plot([x(1) x(end)],[2 2],'b');%nest
+subplot(1,1,a),plot(x,yy,'k','LineWidth',1);hold on
+subplot(1,1,a),plot(x,y,'k.','MarkerSize', 20);hold on
 
-subplot(1,1,a),plot(x,yy,'k');hold on
-subplot(1,1,a),plot(x,y,'ko');hold on
+title(animal);
+yticks([2 2.5 3 3.5 4 4.5 5]);
+yticklabels({'nest','drink','run','decision point','food','social','explore'});
+ylim([-5 5.5]);
+xticks([0 2400 4800 7200 9600 12000]);
+xticklabels({'0','5','10','15','20','25'});
+xlabel("time [min]")
 
-
-%title(animal);
-yticks([0.5 1.5 2 2.5 3 3.5 4 4.5 5]);
-yticklabels({'frames','frames','nest','drink','run','decision point','food','social','explore'});
-ylabel('area');
-ylim([-40 5.5]);
-
+%plot consumption
 for i=1:1:length(pel)
     subplot(1,1,a),plot([pel(i) pel(i)],[3.8 4.2],'y','LineWidth',3);
 end
 for i=1:1:length(drink)
-    subplot(1,1,a),plot([drink(i) drink(i)],[2.4 2.8],'c','LineWidth',3);
+    subplot(1,1,a),plot([drink(i) drink(i)],[2.3 2.7],'c','LineWidth',3);
 end
 for i=1:1:length(run)
     subplot(1,1,a),plot([run(i) run(i)],[2.8 3.2],'m','LineWidth',3);
 end
 
-good_cells = [1:23];
+good_cells = [1 78-61 101-61 107-61 54];
 j=0;
 for i=good_cells
-   subplot(1,1,a),plot((z_scored_raw(:,i)/7-j),'Color',[i/size(raw_f_res,2) 1-i/size(raw_f_res,2) i/size(raw_f_res,2)],'LineWidth',1);hold on;
+   subplot(1,1,a),plot((raw_f([4 4 4 4:end],i)/6-j),'Color',[i/size(raw_f,2) 1-i/size(raw_f,2) i/size(raw_f,2)],'LineWidth',1);hold on;
    j=j+1;
 end
 
+subplot(1,1,a),plot([300 600],[1 1],'k','LineWidth',2);%0.5s
+subplot(1,1,a),plot([300 300],[0.98 0.98+(2/6)],'k','LineWidth',2);%2Std
+ylabel("Ca-activity (z-scored)");
 
+%% Averg Time spent in pods (total seconds and percentage?)
+fn = fieldnames(Specs);
+for ii= 1:4
+    for j =1:size(Specs.(fn{ii}).PodTimes,2)
+        Times=[];relTimes=[];
+        for jj = 1:size(Specs.(fn{ii}).PodTimes,1)
+            %actual seconds
+            Times = cat(1,Times, Specs.(fn{ii}).PodTimes{jj,j});
+            %proportions of whole block time
+            TiS = Specs.(fn{ii}).PodTimes{jj,j};TinProp = TiS/Specs.(fn{ii}).PodTimes{jj,6};
+            relTimes = cat(1,relTimes, TinProp);
+        end
+        Sec{:,j}= Times;
+        Prop{:,j} = relTimes;
+    end
+    SEC{ii,:}=Sec;% collect data from all animals 
+    PROP{ii,:}=Prop;
+end
+
+fn = fieldnames(Specs);
+for ii= 1:4
+    DecTimes=[];relDecTimes = [];
+    for j =1:size(Specs.(fn{ii}).DecTimes,1)
+        %Desicion Times
+        DecTimes = cat(1,DecTimes, Specs.(fn{ii}).DecTimes{j,1});
+        DT = Specs.(fn{ii}).DecTimes{j,1};DTprop = DT/Specs.(fn{ii}).PodTimes{j,6};
+        relDecTimes=cat(1,relDecTimes, DTprop);
+    end
+    SEC{ii,1}{1,7}=DecTimes;% collect data from all animals 
+    PROP{ii,1}{1,7}=relDecTimes;
+end
+secprop = {'food' 'run' 'explore' 'social' 'drink' 'whole block' 'desicion'};
+
+%% trial stats plots
+% total time spent in maze and pods
+% total time
+%g5 g4 g2 g12
+
+%mean drink, food, social, explore, run, desicion
+drink = [ mean(SEC{1,1}{1,5}) mean(SEC{2,1}{1,5}) mean(SEC{3,1}{1,5}) mean(SEC{4,1}{1,5})];
+meand= mean(drink);
+food = [ mean(SEC{1,1}{1,1}) mean(SEC{2,1}{1,1}) mean(SEC{3,1}{1,1}) mean(SEC{4,1}{1,1})];
+meanf= mean(food);
+social = [ mean(SEC{1,1}{1,4}) mean(SEC{2,1}{1,4}) mean(SEC{3,1}{1,4}) mean(SEC{4,1}{1,4})];
+means= mean(social);
+explore = [ mean(SEC{1,1}{1,3}) mean(SEC{2,1}{1,3}) mean(SEC{3,1}{1,3}) mean(SEC{4,1}{1,3})];
+meane= mean(explore);
+run = [ mean(SEC{1,1}{1,2}) mean(SEC{2,1}{1,2}) mean(SEC{3,1}{1,2}) mean(SEC{4,1}{1,2})];
+meanr= mean(run);
+decs = [ mean(SEC{1,1}{1,7}) mean(SEC{2,1}{1,7}) mean(SEC{3,1}{1,7}) mean(SEC{4,1}{1,7})];
+meandec= mean(decs);
+totalNr = [size(SEC{1,1}{1,6},1) size(SEC{2,1}{1,6},1)/2 size(SEC{3,1}{1,6},1) size(SEC{4,1}{1,6},1)/2];
+meanNr = mean(totalNr);
+
+figure % averg time in each pod  (total Nr of blocks in a day, , points are animals
+hold on
+y = [ meand meanf means meane meanr meandec];
+yy = [drink food social explore run decs];
+bar(y)
+colors = ["r" "g" "b" "y"];
+for i = 1:4
+    plot([1 2 3 4 5 6 ],[drink(i) food(i) social(i) explore(i) run(i) decs(i)],[colors(i) + '.'],'MarkerSize', 25);
+end
+xticks([1 2 3 4 5 6 ]);xticklabels({, 'water', 'food', 'social', 'explore', 'run', 'decs'});
+title('Averg time spent in maze');
+ylabel('time [s]');
+
+hold off
+%% relative time in maye
+%mean drink, food, social, explore, run, desicion
+drink = [ mean(PROP{1,1}{1,5}) mean(PROP{2,1}{1,5}) mean(PROP{3,1}{1,5}) mean(PROP{4,1}{1,5})];
+meand= mean(drink);
+food = [ mean(PROP{1,1}{1,1}) mean(PROP{2,1}{1,1}) mean(PROP{3,1}{1,1}) mean(PROP{4,1}{1,1})];
+meanf= mean(food);
+social = [ mean(PROP{1,1}{1,4}) mean(PROP{2,1}{1,4}) mean(PROP{3,1}{1,4}) mean(PROP{4,1}{1,4})];
+means= mean(social);
+explore = [ mean(PROP{1,1}{1,3}) mean(PROP{2,1}{1,3}) mean(PROP{3,1}{1,3}) mean(PROP{4,1}{1,3})];
+meane= mean(explore);
+run = [ mean(PROP{1,1}{1,2}) mean(PROP{2,1}{1,2}) mean(PROP{3,1}{1,2}) mean(PROP{4,1}{1,2})];
+meanr= mean(run);
+decs = [ mean(PROP{1,1}{1,7}) mean(PROP{2,1}{1,7}) mean(PROP{3,1}{1,7}) mean(PROP{4,1}{1,7})];
+meandec= mean(decs);
+totalNr = [size(PROP{1,1}{1,6},1) size(PROP{2,1}{1,6},1)/2 size(PROP{3,1}{1,6},1) size(PROP{4,1}{1,6},1)/2];
+meanNr = mean(totalNr);
+
+figure % averg time in each pod  (total Nr of blocks in a day, , points are animals
+hold on
+y = [ meand meanf means meane meanr meandec];
+yy = [drink food social explore run decs];
+bar(y)
+colors = ["r" "g" "b" "y"];
+for i = 1:4
+    plot([1 2 3 4 5 6 ],[drink(i) food(i) social(i) explore(i) run(i) decs(i)],[colors(i) + '.'],'MarkerSize', 25);
+end
+xticks([1 2 3 4 5 6 ]);xticklabels({, 'water', 'food', 'social', 'explore', 'run', 'decs'});
+title('Relative time spent in maze');
+ylabel('Proportion of time');
+
+hold off
+%%
+%Nr of blocks, duration of blocks
+totalNr = [size(SEC{1,1}{1,6},1) size(SEC{2,1}{1,6},1)/2 size(SEC{3,1}{1,6},1) size(SEC{4,1}{1,6},1)/2];
+meanNr = mean(totalNr);
+
+totalDur = [mean(SEC{1,1}{1,6},1) mean(SEC{2,1}{1,6},1)/2 mean(SEC{3,1}{1,6},1) mean(SEC{4,1}{1,6},1)/2];
+meanDur = mean(totalDur);
+
+figure
+hold on
+bar(1,meanDur);
+for i = 1:4
+    plot([1],[totalDur(i)],[colors(i) + '.'],'MarkerSize', 25);
+end
+ylim([0 710]);
+yticks([120 240 360 480 600 720]);yticklabels({'2', '4', '6', '8', '10', '12'});
+title('Avergage duration of blocks');
+xticks([ ]);xticklabels({''});
+ylabel('time [min]');
+hold off
+
+figure
+hold on
+bar(1,meanNr);
+for i = 1:4
+    plot([1],[totalNr(i)],[colors(i) + '.'],'MarkerSize', 25);
+end
+%ylim([0 0]);
+%yticks([120 240 360 480 600 720]);yticklabels({'2', '4', '6', '8', '10', '12'});
+title('Nr of blocks per day');
+xticks([ ]);xticklabels({''});
+ylabel('Nr of blocks');
+hold off
+
+
+%% Nr of trials per session
+
+%mean drink, food, social, explore, run, desicion entries per session
+drink = [ size(SEC{1,1}{1,5},1)/size(SEC{1,1}{1,6},1) size(SEC{2,1}{1,5},1)/size(SEC{2,1}{1,6},1) size(SEC{3,1}{1,5},1)/size(SEC{3,1}{1,6},1) size(SEC{4,1}{1,5},1)/size(SEC{4,1}{1,6},1)];
+meand= mean(drink);
+food = [ size(SEC{1,1}{1,1},1)/size(SEC{1,1}{1,6},1) size(SEC{2,1}{1,1},1)/size(SEC{2,1}{1,6},1) size(SEC{3,1}{1,1},1)/size(SEC{3,1}{1,6},1) size(SEC{4,1}{1,1},1)/size(SEC{4,1}{1,6},1)];
+meanf= mean(food);
+social = [ size(SEC{1,1}{1,4},1)/size(SEC{1,1}{1,6},1) size(SEC{2,1}{1,4},1)/size(SEC{2,1}{1,6},1) size(SEC{3,1}{1,4},1)/size(SEC{3,1}{1,6},1) size(SEC{4,1}{1,4},1)/size(SEC{4,1}{1,6},1)];
+means= mean(social);
+explore = [ size(SEC{1,1}{1,3},1)/size(SEC{1,1}{1,6},1) size(SEC{2,1}{1,3},1)/size(SEC{2,1}{1,6},1) size(SEC{3,1}{1,3},1)/size(SEC{3,1}{1,6},1) size(SEC{4,1}{1,3},1)/size(SEC{4,1}{1,6},1)];
+meane= mean(explore);
+run = [ size(SEC{1,1}{1,2},1)/size(SEC{1,1}{1,6},1) size(SEC{2,1}{1,2},1)/size(SEC{1,1}{1,6},1) size(SEC{3,1}{1,2},1)/size(SEC{1,1}{1,6},1) size(SEC{4,1}{1,2},1)/size(SEC{1,1}{1,6},1)];
+meanr= mean(run);
+decs = [ size(SEC{1,1}{1,7},1)/size(SEC{1,1}{1,6},1) size(SEC{2,1}{1,7},1)/size(SEC{1,1}{1,6},1) size(SEC{3,1}{1,7},1)/size(SEC{1,1}{1,6},1) size(SEC{4,1}{1,7},1)/size(SEC{1,1}{1,6},1)];
+meandec= mean(decs);
+
+figure 
+hold on
+y = [ meand meanf means meane meanr ];
+yy = [drink food social explore run ];
+bar(y)
+colors = ["r" "g" "b" "y"];
+for i = 1:4
+    plot([1 2 3 4 5 ],[drink(i) food(i) social(i) explore(i) run(i)],[colors(i) + '.'],'MarkerSize', 25);
+end
+xticks([1 2 3 4 5 ]);xticklabels({, 'water', 'food', 'social', 'explore', 'run'});
+title('Avergage pod visits per block');
+ylabel('Nr of visits')
+legend;
+
+hold off
+
+           
 
 
 

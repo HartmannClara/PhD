@@ -9,7 +9,8 @@ iscellMerged = iscell;
 if merged == true
     mergedCells = [33];
     %removeMerged = [1 13 4 26 7 10 30 53 15 19 38 41 3 5 36 20 49 8 32 17 48 6 24];%actual names in suite2p check if x - 1 is correct in ROI image
-    removeMerged = [0 13]; %g2 14. [3 5 10] 25. [3 8 4]
+    %removeMerged = [0 13]; %g2 14. [3 5 10] 25. [3 8 4]
+    removeMerged = [6 2 5 8 105 54 19 120 11 9 37 22 35 84 30 13];
     for i= 1:size(removeMerged,2)
         iscellMerged((removeMerged(i)+1),1) = 0; %mark individual cells of a merge as non cells   
     end    
@@ -22,9 +23,9 @@ onlyCells(nonCells,:) =[]; S2pCells = onlyCells(:,3)-onlyCells(:,1);
 F_Cells = F(Cells,:);
 Fneu_Cells = Fneu(Cells,:);
 %% sort cells here if they have to be matched with previous session S2pCells is the order they are in
-matching = true;
+matching = false;
 %matchedOrder = [2 0 7 13 6 19 25 26 17 43 45]; % order of cells in S2P!!! so it corresponds to 14.07 [0 1 2 4 6 7 11 15 17 18 31]%g2 25.07 
-matchedOrder = [33 5 1 3 6 7 11 2 29 4 8 9 24 12 14 18 16 32 10 17] % g4 0209 matched to 0109 [0 1 2 3 4 5 6 7 8 9 11 12 13 14 16 17 19 20 22 24]
+matchedOrder = [33 5 1 3 6 7 11 2 29 4 8 9 24 12 14 18 16 32 10 17]; % g4 0209 matched to 0109 [0 1 2 3 4 5 6 7 8 9 11 12 13 14 16 17 19 20 22 24]
 %Cells is how they are ordered now, matchedOrderList is how they need to be 
 %S2p cells is the label !!
 if matching == true
@@ -35,7 +36,8 @@ if matching == true
         F_Cells(i,:) = F_Cells_unmatched(find(Cells == matchedOrderlist(i)),:);
         Fneu_Cells(i,:) = Fneu_Cells_unmatched(find(Cells == matchedOrderlist(i)),:);
     end
-end    
+end
+%%
 %split signal and neuropil signal into blocks
 %iterate through first cell and find first black frame of new block
 BlackFrames = find(F_Cells(1,:) < 20);%play with this value until all starts are found

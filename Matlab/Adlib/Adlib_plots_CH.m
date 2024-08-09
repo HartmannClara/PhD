@@ -13,45 +13,45 @@ for se = 1:size(Adlib_drinks,1)
     Adlib_drinks{se,2} = event;
     Adlib_drinks{se,3} = ts;
 end    
-%% sort Adlib session into those with 3+ pellets
+%% sort Adlib session into those with 2+ pellets
 NrPel = cell2mat(Adlib_pellets(:,4));
-adlib3 = NrPel >3;
+adlib3 = NrPel >2;
 AdlibPel = Adlib_pellets(adlib3,:); 
 
 NrDrink = cell2mat(Adlib_drinks(:,4));
-adlib3d = NrDrink >3;
+adlib3d = NrDrink >2;
 AdlibDri = Adlib_drinks(adlib3d,:); 
 
 %% separate out good cells
 % collective neuropil cell is last cell in array and individual np is already subtracted
 
 for i=1:numel(AdlibPel(:,1))
-    if AdlibPel{i,5} =='g10'
+    if AdlibPel{i,5} =='g19'
         %good_cells=[1 2 4 5 8 10 11 13 14 15];% last is np
-        good_cells=[1 2 5 8 15];
+        good_cells=[7 13 16 17];
     elseif AdlibPel{i,5} =='g12'
         %good_cells=[1 2 3 4 5 6 7 8 9 14 15];
-        good_cells=[2 5 15];
+        good_cells=[4];
     elseif AdlibPel{i,5} =='g15' 
         %good_cells=[1 2 4 5 6 7 8 11 12 18 19];
-        good_cells=[1 2 6 7 8 11 19];
+        good_cells=[2 7 8 9 25 26];
     end
     snip = AdlibPel{i,1};snip=snip(:,good_cells);
     AdlibPel{i,1} = snip;
 end
-
-
-for i=1:numel(AdlibDri(:,1))
-    if AdlibDri{i,5} =='g10'
-        good_cells=[1 2 4 5 8 10 11 13 14];
-    elseif AdlibDri{i,5} =='g12'
-        good_cells=[1 2 3 4 5 6 7 8 9 14];
-    elseif AdlibDri{i,5} =='g15'
-        good_cells=[1 2 4 5 6 7 8 11 12 18];;    
-    end
-    snip = AdlibDri{i,1};snip=snip(:,good_cells);
-    AdlibDri{i,1} = snip;
-end
+% 
+% 
+% for i=1:numel(AdlibDri(:,1))
+%     if AdlibDri{i,5} =='g10'
+%         good_cells=[1 2 4 5 8 10 11 13 14];
+%     elseif AdlibDri{i,5} =='g12'
+%         good_cells=[1 2 3 4 5 6 7 8 9 14];
+%     elseif AdlibDri{i,5} =='g15'
+%         good_cells=[1 2 4 5 6 7 8 11 12 18];;    
+%     end
+%     snip = AdlibDri{i,1};snip=snip(:,good_cells);
+%     AdlibDri{i,1} = snip;
+% end
 %% add new fluorescence across whole population as last "cell'
 for ss = 1:size(AdlibPel,1)
     trace = AdlibPel{ss,1};
@@ -76,13 +76,13 @@ end
 
 %% make simple plots of trace of each cell with marked pellet retrieval
 figure;
-session =16;
+session =18;
 space=0;
 for p= 1:size(AdlibPel{session,1},2)
    
     meal = AdlibPel{session,1};
     %meal(:,p) = meal(:,p) - meal(:,end);
-    meal(:,p) = smooth(meal(:,p),6);% signal is smoothed!
+    meal(:,p) = smooth(meal(:,p),7);% signal is smoothed!
     plot(meal(:,p)+ space, LineWidth=1.5);hold on
     space= space-4;
 end
@@ -94,18 +94,38 @@ end
 plot([100 50], [5 5],LineWidth= 3,Color='k');%[X X][Y Y]% 5s aka 50 frames
 plot([50 50],[7 5],LineWidth= 3,Color= 'k'); %2s.d.
 hold off;
+% %% Drinks
+% figure;
+% session =14;
+% space=0;
+% for p= 1:size(AdlibDri{session,1},2)
+%    
+%     meal = AdlibDri{session,1};
+%     %meal(:,p) = meal(:,p) - meal(:,end);
+%     meal(:,p) = smooth(meal(:,p),2);% signal is smoothed!
+%     plot(meal(:,p)+ space, LineWidth=2);hold on
+%     space= space-4;
+% end
+% for line =1:size(AdlibDri{session,3},1)% plots lines for entry pellet and exit
+%     ev = AdlibDri{session,3};
+%     xline(ev(line), LineWidth=1 );
+% end    
+% %make a small axis label for traces
+% plot([100 50], [5 5],LineWidth= 3,Color='k');%[X X][Y Y]% 5s aka 50 frames
+% plot([50 50],[7 5],LineWidth= 3,Color= 'k'); %2s.d.
+% hold off;
 
 %% traces of only one cell in one session
 
 figure;
-session =7;
+session =10;
 space=0;
-for p = 4%cell
+for p = 5%cell
    
     meal = AdlibPel{session,1};
     %meal(:,p) = normalize(meal(:,p));
     meal(:,p) = meal(:,p) - meal(:,end);
-    meal(:,p) = smooth(meal(:,p),9);% signal is smoothed!
+    meal(:,p) = smooth(meal(:,p),25);% signal is smoothed!
     
     plot(meal(:,p)+ space, LineWidth=1.5);hold on
     space= space-4;
@@ -122,32 +142,32 @@ hold off;
 
 
 
-%% make example for one cell response to first 2 pell midlle two and last two?
-
-c22s16 = AdlibPel{16,1}(:,5);
-c22s16BH = AdlibPel{16,3};
-figure;
-subplot(1,3,1); plot(smooth(c22s16(90:390),10),LineWidth=2); hold on;
-    ylim([-1.5 3]);xlim([0 300]);
-    ev= c22s16BH(3:7);%2, 3, 4, 5, 6 
-    for p = 1:size(ev,1)
-        xline(ev(p)-90, LineWidth=3, Color= 'r', Alpha=0.5 );
-    end    
-
-subplot(1,3,2); plot(smooth(c22s16(900:1200),10),LineWidth=2);
-    ylim([-1.5 3]);xlim([0 300]);
-    ev= c22s16BH(12:14);%pel 11 and 12, 13
-    for p = 1:size(ev,1)
-        xline(ev(p)-900, LineWidth=3, Color= 'r', Alpha=0.5 );
-    end 
-
-subplot(1,3,3); plot(smooth(c22s16(2000:2300),10),LineWidth=2);
-    ylim([-1.5 3]);xlim([0 300]);
-    ev= c22s16BH(21:22);%last 2 (20, 21)
-    for p = 1:size(ev,1)
-        xline(ev(p)-2000, LineWidth=3, Color= 'r', Alpha=0.5 );
-    end 
-hold off;
+% %% make example for one cell response to first 2 pell midlle two and last two?
+% 
+% c22s16 = AdlibPel{16,1}(:,5);
+% c22s16BH = AdlibPel{16,3};
+% figure;
+% subplot(1,3,1); plot(smooth(c22s16(90:390),10),LineWidth=2); hold on;
+%     ylim([-1.5 3]);xlim([0 300]);
+%     ev= c22s16BH(3:7);%2, 3, 4, 5, 6 
+%     for p = 1:size(ev,1)
+%         xline(ev(p)-90, LineWidth=3, Color= 'r', Alpha=0.5 );
+%     end    
+% 
+% subplot(1,3,2); plot(smooth(c22s16(900:1200),10),LineWidth=2);
+%     ylim([-1.5 3]);xlim([0 300]);
+%     ev= c22s16BH(12:14);%pel 11 and 12, 13
+%     for p = 1:size(ev,1)
+%         xline(ev(p)-900, LineWidth=3, Color= 'r', Alpha=0.5 );
+%     end 
+% 
+% subplot(1,3,3); plot(smooth(c22s16(2000:2300),10),LineWidth=2);
+%     ylim([-1.5 3]);xlim([0 300]);
+%     ev= c22s16BH(21:22);%last 2 (20, 21)
+%     for p = 1:size(ev,1)
+%         xline(ev(p)-2000, LineWidth=3, Color= 'r', Alpha=0.5 );
+%     end 
+% hold off;
 %% plot all in subplots
 fA = figure;
 figure(fA);
@@ -156,7 +176,7 @@ for session = 1: size(AdlibPel,1)-9
     for p= 1:(size(AdlibPel{session,1},2)-1)
         meal = AdlibPel{session,1};
         meal(:,p) = meal(:,p) - meal(:,end);%np subtracted!
-        meal(:,p) = smooth(meal(:,p),5);% signal is smoothed! 
+        meal(:,p) = smooth(meal(:,p),10);% signal is smoothed! 
         h1 = subplot(5,2,session) ;plot(meal(:,p)+ space, LineWidth=1);hold on
         space= space-3;
     end
@@ -174,7 +194,7 @@ for session = 10: size(AdlibPel,1)
     for p= 1:(size(AdlibPel{session,1},2)-1)
         meal = AdlibPel{session,1};
         meal(:,p) = meal(:,p) - meal(:,end);%np subtracted!
-        meal(:,p) = smooth(meal(:,p),5);% signal is smoothed! 
+        meal(:,p) = smooth(meal(:,p),10);% signal is smoothed! 
         h1 = subplot(5,2,session-9) ;plot(meal(:,p)+ space, LineWidth=1);hold on
         space= space-3;
     end
@@ -209,23 +229,27 @@ end
 % end 
 
 %% separate into separate animals
-g10=[];g12=[];g15=[];
+g10=[];g12=[];g15=[];g19=[];
 for el = 1:size(AdlibPel,1)
     label = AdlibPel{el,5};
     if label == "g10"
         a=AdlibPel(el,:);
         g10 = [g10; a];
-    elseif label == "g12"
+    elseif label == 'g12'
         a=AdlibPel(el,:);
         g12 = [g12; a];
-    elseif label == "g15"
+    elseif label == 'g15'
         a=AdlibPel(el,:);
-        g15 = [g15; a];    
+        g15 = [g15; a];
+    elseif label == 'g19'
+        a=AdlibPel(el,:);
+        g19 = [g19; a];    
     end
 end
 Adlib.Pel.g10=g10;
 Adlib.Pel.g12=g12;
 Adlib.Pel.g15=g15;
+Adlib.Pel.g19=g19;
 
 %% snip baseline window and average across all trials to subtract from snip
 % % later
@@ -314,70 +338,48 @@ fn=fieldnames(ColSnips.Pel);
         end
     end
 
-%% plot
-
-fn=fieldnames(ColSnips.Pel);
-for j = 1:size(fn,1)
-    animal = ColSnips.Pel.(fn{j});
-    for jj =1:size(animal,2)
-        meal = ColSnips.Pel.(fn{j}){2,jj};
-        for cell=1:size(meal,2)
-            x = [1:size(meal(:,cell),1)];
-            figure(s1);
-            subplot(2,4,jj);plot(x,(meal(:,cell))',Color=colors(cell));hold on;      
-        end
-    end
-end
-
-
-
-
-
-
-
-
-
-
-
-
-s1=figure;
-colors = ['r','g','b','c','m','y','k','#0072BD','#D95319','#EDB120','#7E2F8E',"#77AC30","#4DBEEE"];
-%x=[1:30];
-fn=fieldnames(ColSnips.Pel);
-for j = 1:size(fn,1)
-    animal = ColSnips.Pel.(fn{j});
-    for jj =1:size(animal,2)
-        meal = ColSnips.Pel.(fn{j}){2,jj};
-        for cell=1:size(meal,2)
-            x = [1:size(meal(:,cell),1)];
-            figure(s1);
-            subplot(2,4,jj);plot(x,(meal(:,cell))',Color=colors(cell));hold on;      
-        end
-    end
-end
-
-
-
-
-
-
-
-
-
-
-
-
+% %% plot
+% s1=figure;
+% fn=fieldnames(ColSnips.Pel);
+% for j = 1:size(fn,1)
+%     animal = ColSnips.Pel.(fn{j});
+%     for jj =1:size(animal,2)
+%         meal = ColSnips.Pel.(fn{j}){2,jj};
+%         for cell=1:size(meal,2)
+%             x = [1:size(meal(:,cell),1)];
+%             figure(s1);
+%             subplot(2,4,jj);plot(x,(meal(:,cell))',Color=colors(cell));hold on;      
+%         end
+%     end
+% end
+% 
+% 
+% s1=figure;
+% colors = ['r','g','b','c','m','y','k','#0072BD','#D95319','#EDB120','#7E2F8E',"#77AC30","#4DBEEE"];
+% %x=[1:30];
+% fn=fieldnames(ColSnips.Pel);
+% for j = 1:size(fn,1)
+%     animal = ColSnips.Pel.(fn{j});
+%     for jj =1:size(animal,2)
+%         meal = ColSnips.Pel.(fn{j}){2,jj};
+%         for cell=1:size(meal,2)
+%             x = [1:size(meal(:,cell),1)];
+%             figure(s1);
+%             subplot(2,4,jj);plot(x,(meal(:,cell))',Color=colors(cell));hold on;      
+%         end
+%     end
+% end
 
 %%  PSTH
 
 % concatenate over one animal
-Pelg10 = [];
-for s= 1:size(ColSnips.Pel.g10,2)
-    sess = ColSnips.Pel.g10{1,s};
+Pelg19 = [];
+for s= 1:size(ColSnips.Pel.g19,2)
+    sess = ColSnips.Pel.g19{1,s};
     sess = sess(:,1:end-1,:);%remove averg across population
-    Pelg10  = cat(3,Pelg10, sess);
+    Pelg19  = cat(3,Pelg19, sess);
 end
-Pelg10m = mean(Pelg10,3);%average across all cells for one animal
+Pelg19m = mean(Pelg19,3);%average across all cells for one animal
 %imagesc(Pelg10m');
 
 %g12
@@ -402,7 +404,7 @@ Pelg15m = mean(Pelg15,3);%average across all cells for one animal
 %imagesc(Pelg15m');
 
 
-Pel_averg = (cat(2,Pelg10m(:,1:end-1,:),Pelg12m(:,1:end-1,:),Pelg15m(:,1:end-1,:)))';%without np
+Pel_averg = (cat(2,Pelg19m(:,1:end-1,:),Pelg12m(:,1:end-1,:),Pelg15m(:,1:end-1,:)))';%without np
 figure;
 imagesc(Pel_averg);hold on
 xline(win+1,LineWidth=2);
@@ -410,12 +412,12 @@ xticks([4 9 14]); xticklabels({'-0.5','0' ,'0.5' });
 xlabel('\fontsize{12}time from pellet retrieval [s]'); ylabel('Cells');
 
 %sorted 
-Pelaverg_mean = mean(Pel_averg(:,7:11),2);Pelaverg_mean(:,2)=[1:26];
+Pelaverg_mean = mean(Pel_averg(:,7:11),2);Pelaverg_mean(:,2)=[1:62];
 Pelaverg_mean_sort = sortrows(Pelaverg_mean);
 
 for r = 1:size(Pelaverg_mean_sort,1)
     k = Pelaverg_mean_sort(r,2);
-    Pel_averg_sort(r,:) = Pel_averg(k,:) 
+    Pel_averg_sort(r,:) = Pel_averg(k,:) ;
 end
 f2 = figure; 
 figure(f2);
@@ -483,12 +485,12 @@ end
 figure;
 histogram(MaxI(1,:)); hold on;
 ylim([0 9]);
-xticks([1 2 3 4 5 6 7 10 11 13 14 15 17 ]); xticklabels({'-.8','-.7','-.6','-.5','-.4','-.3','-.2','.1','.2','.4','.5','.6','.8',});
+xticks([ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17]); xticklabels({'-.8','-.7','-.6','-.5','-.4','-.3','-.2','-.1','0','.1','.2','.3','.4','.5','.6','.7','.8'});
 xlabel('\fontsize{12}peak from pellet retrieval [s]'); ylabel('Nr of Cells');
 
 figure;
 histogram(MaxI(1,:),2);hold on;
-ylim([0 16]);
+%ylim([0 16]);
 xticks([4 14]); xticklabels({'peak pre pellet ','peak post pellet'});
 ylabel('Nr of Cells');
 % 
@@ -496,59 +498,90 @@ ylabel('Nr of Cells');
 % nr_post= find (MaxI > 9);
 %% classify cells as On or Off
 % all cells marked with 1 in row 2 of Classif
-% Classif = [1:size(Pel_averg,1)];
-% clear cell
-% for cell = 1:size(Pel_averg,1)
-%     Cellmean(cell) = mean(Pel_averg(cell,:),2);
-%     if Cmax(cell) > 0.4;%on cells
-%        Classif(2,cell) = 1 ; 
-%     elseif Cmax(cell) < -0.4% off cells ARBITRARY Threshold !!!!!!!!!!!!!!!!!!!!!
-%        Classif(2,cell) = 2 ;   
-%     else
-%        Classif(2,cell) = 0 ;   
-%     end
-% end
+Classif = [1:size(Pel_averg,1)];
+popstd = std(Cmax);% standard deviation of whole population
+fact = 1.5;
+clear cell
+for cell = 1:size(Pel_averg,1)
+    Cellmean(cell) = mean(Pel_averg(cell,:),2);
+    if Cmax(cell) > fact* popstd;%on cells
+       Classif(2,cell) = 1 ; 
+    elseif Cmax(cell) < -(fact*popstd)% off cells according to std
+       Classif(2,cell) = 2 ;   
+    else
+       Classif(2,cell) = 0 ;   
+    end
+end
+
 %% plot On and off cells
-% OnCells = find(Classif(2,:)==1);%index of on cells
-% OffCells = find(Classif(2,:)==2);%index of on cells
-% NoneCells = find(Classif(2,:)==0);
-% Pel_On =Pel_averg([OnCells],:);
-% Pel_Off =Pel_averg([OffCells],:);
-% Pel_None =Pel_averg([NoneCells],:);
+OnCells = find(Classif(2,:)==1);%index of on cells
+OffCells = find(Classif(2,:)==2);%index of on cells
+NoneCells = find(Classif(2,:)==0);
+Pel_On =Pel_averg([OnCells],:);
+Pel_Off =Pel_averg([OffCells],:);
+Pel_None =Pel_averg([NoneCells],:);
+
+CellsClassif = cat(1,Pel_On,Pel_None,Pel_Off); 
+figure;
+p1=subplot(1,1,1); imagesc(CellsClassif);hold on;set(p1, 'Position', [0.13,0.58,0.3,0.37]);
+    ylim([1 26]); xlim([1 17]);
+    xline(win+1,LineWidth=1,Color='w',LineStyle='--');
+    xticks([4 9 14]); xticklabels({'-.5','0' ,'.5' });
+    xlabel('\fontsize{12}time from pellet retrieval [s]');
+    yline(size(Pel_On,1)+0.5,LineWidth=1,Color='w',LineStyle='-');
+    yline(size(Pel_None,1)+size(Pel_On,1)+0.5,LineWidth=1,Color='w',LineStyle='-');
+    ylabel('Cells');
+% std of both no cells and on cells:
+figure;
+hold on;
+sp1 = subplot(2,1,1);imagesc(CellsClassif);set(sp1, 'Position', [0.13,0.58,0.3,0.37]);
+    ylim([1 26]); xlim([1 17]);
+    xline(win+1,LineWidth=1,Color='w',LineStyle='--');
+    xticks([4 9 14]); xticklabels({'','' ,'' });
+    ylabel('Cells');
+    yline(size(Pel_On,1)+0.5,LineWidth=1,Color='w',LineStyle='-');
+    yline(size(Pel_None,1)+size(Pel_On,1)+0.5,LineWidth=1,Color='w',LineStyle='-');
+    %yline(8.5,LineWidth=1,Color='k',LineStyle='-');
+    %yline(17.5,LineWidth=1,Color='k',LineStyle='-');
+
+    On_classif = CellsClassif(OnCells,:);
+    No_classif = CellsClassif(NoneCells,:);
+
+sp2= subplot(2,1,2);stdshade(No_classif,0.3,[0 0 1]);set(sp2, 'Position', [0.13,0.475,0.3,0.10]);hold on; 
+    xticks([4 9 14]); xticklabels({'-0.5','0' ,'0.5' });
+    xlabel('\fontsize{12}time from pellet retrieval [s]');
+    ylabel('Ca+-response (z-scored, s.d.)');
+    ylim([-0.5 0.5]);xlim([1 17]);
+    yticks([-0.3 0 0.3]);yticklabels({'-0.3','0' ,'0.3' });
+    stdshade(On_classif,0.3,[1 0 0]);
 % 
-% CellsClassif = cat(1,Pel_On,Pel_None,Pel_Off); 
-% figure;
-% p1=subplot(1,1,1); imagesc(CellsClassif);hold on;set(p1, 'Position', [0.13,0.58,0.3,0.37]);
-%     ylim([1 26]); xlim([1 17]);
-%     xline(win+1,LineWidth=1,Color='w',LineStyle='--');
-%     xticks([4 9 14]); xticklabels({'-.5','0' ,'.5' });
-%     xlabel('\fontsize{12}time from pellet retrieval [s]');
-%     yline(size(Pel_On,1)+0.5,LineWidth=1,Color='w',LineStyle='-');
-%     yline(size(Pel_None,1)+size(Pel_On,1)+0.5,LineWidth=1,Color='w',LineStyle='-');
-%     ylabel('Cells');
-% 
-% 
-% C = Pel_On(1,:);
-% [Cmax,MaxI] = max(C);
-% clear cell C
-% for cell = 1:size(Pel_On,1)
-%     C = Pel_On(cell,:);
-%     [Cmax(cell),MaxI(cell)] = max(C);
-% end  
+C = Pel_On(1,:);
+[Cmax,MaxI] = max(C);
+clear cell C
+for cell = 1:size(Pel_On,1)
+    C = Pel_On(cell,:);
+    [Cmax(cell),MaxI(cell)] = max(C);
+end  
 
 %plot histogram of cells
-% figure;
-% histogram(MaxI); hold on;
-% ylim([0 4]);
-% xticks([ 2  4  6 7 10 11 14 15 17 ]); xticklabels({'-.8','-.5','-.3','-.2','.1','.2','.5','.6','.8',});
-% yticks([1 2 3 4]);
-% xlabel('\fontsize{12}peak from pellet retrieval [s]'); ylabel('Nr of Cells');
-% 
-% figure;
-% histogram(MaxI,2);hold on;
-% ylim([0 10]);
-% xticks([4 14]); xticklabels({'peak pre pellet ','peak post pellet'});
-% ylabel('Nr of Cells');
+figure;
+histogram(MaxI); hold on;
+ylim([0 4]);
+xticks([ 2  4  6 7 10 11 14 15 17 ]); xticklabels({'-.8','-.5','-.3','-.2','.1','.2','.5','.6','.8',});
+yticks([1 2 3 4]);
+xlabel('\fontsize{12}peak from pellet retrieval [s]'); ylabel('Nr of Cells');
+
+figure;
+histogram(MaxI,4);hold on;
+ylim([0 10]);
+xticks([4 14]); xticklabels({'peak pre pellet ','peak post pellet'});
+ylabel('Nr of Cells');
+
+%pie charts of on cells
+pie([pre post size(NoneCells,2)]);
+
+pre = size(find(MaxI < 9),2);
+post = size(find(MaxI > 8),2);
 %% plot histogram/stacked bar of on and off cells
 % clear cell C MaxI Cmax
 % for cell = 1:size(Pel_averg,1)
@@ -931,15 +964,18 @@ xlabel('\fontsize{12}time from pellet retrieval [s]'); ylabel('Cells');
 %plot(Pel_averg');
 %plot(Pel_averg_bsl')
 %% ethogram plots
-%good_cells=[1 2 4 5 8 10 11 13 14];animal ='g10';
-good_cells=[1 2 3 4 5 6 7 8 9 14]; animal ='g12';
-%good_cells=[1 2 4 5 6 7 8 11 12 18];animal ='g15';
-
+set(gcf,'renderer','Painters');
+%good_cells=[1:16];animal ='g12';
+%good_cells=[1:28]; animal ='g15';
+%good_cells=[1:2 4:5 8];animal ='g10';
+good_cells=[1:4 11:13 15:19 25:26]; animal ='g15';
+%good_cells=[1:14 17:18];animal ='g19';
+s=4;%session
 factor = 0.9;
 fn=fieldnames(ci_data.adlib);
 ii=2;%animal
 fn1=fieldnames(ci_data.adlib.(fn{ii}));
-j=1 ; s=2;%day and session
+j=1 ; %day
 fn2=fieldnames(ci_data.adlib.(fn{ii}).(fn1{j}));
 k= 1;
 fn3= fieldnames(ci_data.adlib.(fn{ii}).(fn1{j})(s).(fn2{k}));
@@ -953,6 +989,7 @@ fn3= fieldnames(ci_data.adlib.(fn{ii}).(fn1{j})(s).(fn2{k}));
                 
  df_f_trace = dFoF(subneuro_trace);%df/f
  raw_f= zscore(df_f_trace,0,1);% zscored using sample sd
+
  raw_f = raw_f(:,good_cells);% pick out good cells and np(last cell in array) % second to last is averg but across all not just good cells
  mean_raw_f = mean(raw_f(:,1:end-1),2);
  raw_f= [raw_f,mean_raw_f];%averg across selected pop is last one
@@ -989,13 +1026,15 @@ yy=fillmissing(y,'linear');
 figure;a=1;
 subplot(1,1,a),plot([x(1) x(end)],[3.5 3.5],'b');hold on%decisionpoint
 %subplot(1,1,a),plot([x(1) x(end)],[2 2],'b');%nest
-subplot(1,1,a),plot(x,yy,'k','LineWidth',1);hold on
+subplot(1,1,a),plot(x,yy,'k','LineWidth',2);hold on
 subplot(1,1,a),plot(x,y,'k.','MarkerSize', 20);hold on
 
 title(animal);
 yticks([2 2.5 3 3.5 4 4.5 5]);
 yticklabels({'nest','drink','run','decision point','food','social','explore'});
-ylim([-12 5]);xlim([-10 size(raw_f,1)+10]);
+ylim([-18 5]);
+xlim([-10 size(raw_f,1)+10]);
+%xlim([(size(raw_f,1)+10)-6000 size(raw_f,1)+10]);
 xticks([0 6000 12000 18000 24000 30000]);
 xticklabels({'0','10','20','30','40', '50'});
 xlabel("time [min]")
@@ -1013,14 +1052,17 @@ end
 
 j=0;
 for i=1:size(raw_f,2)
-   subplot(1,1,a),plot(smooth(raw_f(4:end,i),5)/6-j,'Color',[i/size(raw_f,2) 1-i/size(raw_f,2) i/size(raw_f,2)],'LineWidth',1);hold on;
+   subplot(1,1,a),plot(smooth(raw_f(4:end,i),20)/6-j,'Color',[i/size(raw_f,2) 1-i/size(raw_f,2) i/size(raw_f,2)],'LineWidth',1.5);hold on;
    j=j+1;
 end
 
 %subplot(1,1,a),plot([300 600],[1 1],'k','LineWidth',2);%30s
 %subplot(1,1,a),plot([300 300],[0.98 0.98+(2/6)],'k','LineWidth',2);%2Std
 subplot(1,1,a),plot([3400 3700],[1 1],'k','LineWidth',2);%30s
-subplot(1,1,a),plot([3400 3400],[0.98 0.98+(2/6)],'k','LineWidth',2);%2Std
+subplot(1,1,a),plot([3400 3400],[0.99 0.99+(2/6)],'k','LineWidth',2);%2Std
+
+%subplot(1,1,a),plot([23400 23700],[1 1],'k','LineWidth',2);%30s
+%subplot(1,1,a),plot([23400 23400],[0.99 0.99+(2/6)],'k','LineWidth',2);%2Std
 ylabel("Ca-activity (z-scored)");
 
 

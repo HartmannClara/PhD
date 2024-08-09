@@ -137,14 +137,14 @@ end
 
 %% get cell numbers for each animal
 fn=fieldnames(events_averg);
-for ii=1:4
+for ii=1: 4
     fn1=fieldnames(events_averg.(fn{ii}));
         for j=1:19
         Cellnumbers(j, ii) = size(events_averg.(fn{ii}).(fn1{j}),2);
         end
 end
 Rownames = {(fn1(1:19))};
-Cellnumbers = array2table(Cellnumbers,'VariableNames',{'g5','g4','g2','g12'},'RowNames',Rownames{1,1});% How many trials there are of every event typer per animal
+Cellnumbers = array2table(Cellnumbers,'VariableNames',{'g11','g12','g14','g15','g19','g20','g4','g42'},'RowNames',Rownames{1,1});% How many trials there are of every event typer per animal
 %% get trial numbers for each animal
 for ii=1: 4
     fn1=fieldnames(events_averg.(fn{ii}));
@@ -154,7 +154,7 @@ for ii=1: 4
 end
 Trialnumbers(Trialnumbers==1) = 0;
 Rownames = {(fn1(1:19))};
-Trialnumbers = array2table(Trialnumbers,'VariableNames',{'g5','g4','g2','g12'},'RowNames',Rownames{1,1});% How many trials there are of every event typer per animal
+Trialnumbers = array2table(Trialnumbers,'VariableNames',{'g11','g12','g14','g15','g19','g20','g4','g42'},'RowNames',Rownames{1,1});% How many trials there are of every event typer per animal
 
 
 %% makes an average over all trials per cell
@@ -169,10 +169,10 @@ end
 %% concatenating over averg from all cells (all cells together)
 fn1=fieldnames(events_averg.g5);
     for j=39:54
-        events_averg.all.(strrep((fn1{j}), '_averg_bsl_m', '')) = cat(2,events_averg.g5.(fn1{j}),events_averg.g4.(fn1{j}),events_averg.g2.(fn1{j}),events_averg.g12.(fn1{j}));
+        events_averg.all.(strrep((fn1{j}), '_averg_bsl_m', '')) = cat(2,events_averg.g11.(fn1{j}),events_averg.g12.(fn1{j}),events_averg.g14.(fn1{j}),events_averg.g15.(fn1{j}),events_averg.g19.(fn1{j}),events_averg.g20.(fn1{j}),events_averg.g4.(fn1{j}),events_averg.g42.(fn1{j}));
     end
     for j=55:numel(fn1)
-        events_averg.all.(strrep((fn1{j}), '_averg_nc_bsl_m', '_nc')) = cat(2,events_averg.g5.(fn1{j}),events_averg.g4.(fn1{j}),events_averg.g2.(fn1{j}),events_averg.g12.(fn1{j}));
+        events_averg.all.(strrep((fn1{j}), '_averg_nc_bsl_m', '_nc')) = cat(2,events_averg.g11.(fn1{j}),events_averg.g12.(fn1{j}),events_averg.g14.(fn1{j}),events_averg.g15.(fn1{j}),events_averg.g19.(fn1{j}),events_averg.g20.(fn1{j}),events_averg.g4.(fn1{j}),events_averg.g42.(fn1{j}));
     end
 % rename blockend to be!!!!!!!!!!!!!! 
 events_averg.all.be = events_averg.all.blockend;
@@ -202,19 +202,17 @@ events_averg.all.eat_antic_averg = mean(events_averg.all.eat(16:30,:),1);%16:30
 %events_averg.all = rmfield(events_averg.all, "run_averg");
 
 % add missing cells to events with missing trials
-% ze35=zeros(1,35);
-% ze72=zeros(1,72);
-% ze24=zeros(1,24);
-% ze17=zeros(1,17);
-% events_averg.all.er_averg = cat(2,events_averg.all.er_averg(:,1:74), ze35, events_averg.all.er_averg(:,75:122),ze72, ze24,ze17);
-% events_averg.all.run_averg = cat(2,events_averg.all.run_averg(:,1:74), ze35, events_averg.all.run_averg(:,75:122),ze72, ze24,ze17);
-% 
-% events_averg.all.ed_nc_averg = cat(2,events_averg.all.ed_nc_averg(:,1:74),ze35, events_averg.all.ed_nc_averg(:,75:122),ze72, ze24,events_averg.all.ed_nc_averg(:,123:end));
-% 
-% events_averg.all.ee_averg = cat(2,events_averg.all.ee_averg(:,1:74),ze35,events_averg.all.ee_averg(:,75:end));
-% events_averg.all.expl_averg = cat(2,events_averg.all.expl_averg(:,1:74),ze35,events_averg.all.expl_averg(:,75:end));
+ze35=zeros(1,35);
+ze72=zeros(1,72);
+ze24=zeros(1,24);
+ze17=zeros(1,17);
+events_averg.all.er_averg = cat(2,events_averg.all.er_averg(:,1:74), ze35, events_averg.all.er_averg(:,75:122),ze72, ze24,ze17);
+events_averg.all.run_averg = cat(2,events_averg.all.run_averg(:,1:74), ze35, events_averg.all.run_averg(:,75:122),ze72, ze24,ze17);
 
+events_averg.all.ed_nc_averg = cat(2,events_averg.all.ed_nc_averg(:,1:74),ze35, events_averg.all.ed_nc_averg(:,75:122),ze72, ze24,events_averg.all.ed_nc_averg(:,123:end));
 
+events_averg.all.ee_averg = cat(2,events_averg.all.ee_averg(:,1:74),ze35,events_averg.all.ee_averg(:,75:end));
+events_averg.all.expl_averg = cat(2,events_averg.all.expl_averg(:,1:74),ze35,events_averg.all.expl_averg(:,75:end));
 
 %% binary
 % std of the population to compare to 
@@ -474,7 +472,7 @@ figure; b1= barh(Entries,'stacked');ylim([0.5 6.5]);xlim([0 26]);%
 %% consumption %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 Cons = [size(drink_cells,1) size(drink_cells_inh,1); size(eat_cells,1) size(eat_cells_inh,1); size(soc_cells,1)  size(soc_cells_inh,1); size(run_cells,1)  size(run_cells_inh,1)     ;size(expl_cells,1) size(expl_cells_inh,1);size(home_cells,1) size(home_cells_inh,1)];
-X = categorical({'drink','eat','social','run','explore','home'});X = reordercats(X,{'drink','eat','social','run','explore','home'});
+X = categorical({'drink','eat','social','explore','home'});X = reordercats(X,{'drink','eat','social','explore','home'});
 figure; bar(X,Cons,'stacked'); ylabel('\fontsize{12}Nr of cells');ylim([1 60]);
 
 yticks([1:6]); yticklabels({'drink','food','social','run','explore','end'});
@@ -529,8 +527,7 @@ size(find(ismember(exApp, InhApp) == 1))
 pie(y2);
 pie(y3);
 
-%
-pie only
+
 
 
 isboth = ismember(ExConsC,ExEntryC);ExBoth = ExConsC(isboth == 1);
@@ -807,64 +804,53 @@ limaverg = [-1 1];
 f7=figure;% averages across all sessions
 figure(f7);hold on;
 sp11 = subplot(2,6,1),imagesc([-win:0],[1:size(events_averg.allAsc.ed,2)],events_averg.allAsc.ed');xline(-20,'--b');yline(4.5,'-w');left=0.13; width=0.051; btw= 0.0325;
-        %trials = sort(table2array(Trialnumbers(1,:)));trials(trials == 0) = []; 
-        set(sp11, 'Position',[left,0.58,width,0.34]);
-        %title(['\fontsize{10}enter drink',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);
-        clim(lim);
+        trials = sort(table2array(Trialnumbers(1,:)));trials(trials == 0) = []; set(sp11, 'Position',[left,0.58,width,0.34]);
+        title(['\fontsize{10}enter drink',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);clim(lim);
         xticklabels({' ',' ',' ',''});ylabel('\fontsize{15}Cells'); 
         
         sp1= subplot(2,6,7); stdshade(events_averg.allAsc.ed',0.3,[0 0 1]);set(sp1, 'Position', [left,0.425,width,0.15]);hold on
-            %stdshade(events_averg_ch.allAsc.ed',0.3,[1 1 1]);
+            stdshade(events_averg_ch.allAsc.ed',0.3,[1 1 1]);
             xticks([1 11 21 31]);xticklabels({'-3','-2','-1','0'});xlabel('\fontsize{12}time [s]'); ylabel('\fontsize{12}Ca-activity (z-scored)');
             ylim(limaverg);hold off
 
 sp22 = subplot(2,6,2),imagesc([-win:0],[1:size(events_averg.allAsc.ef,2)],events_averg.allAsc.ef');xline(-20,'--b');yline(4.5,'-w');left =left+width+btw;
-        %trials = sort(table2array(Trialnumbers(2,:)));trials(trials == 0) = []; 
-        set(sp22, 'Position',[left,0.58,width,0.34]);
-        %title(['\fontsize{10}enter food',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);
-        clim(lim);
+        trials = sort(table2array(Trialnumbers(2,:)));trials(trials == 0) = []; set(sp22, 'Position',[left,0.58,width,0.34]);
+        title(['\fontsize{10}enter food',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);clim(lim);
         xticklabels({' ',' ',' ',''});
         sp2= subplot(2,6,8); stdshade(events_averg.allAsc.ef',0.3,[0 0 1]);set(sp2, 'Position', [left,0.425,width,0.15]);hold on
-        %stdshade(events_averg_ch.allAsc.ef',0.3,[1 1 1]);hold off
+        stdshade(events_averg_ch.allAsc.ef',0.3,[1 1 1]);hold off
         xticks([1 11 21 31]);xticklabels({'-3','-2','-1','0'});xtickangle(0);
         ylim(limaverg);
 sp33= subplot(2,6,3),imagesc([-win:0],[1:size(events_averg.allAsc.es,2)],events_averg.allAsc.es');xline(-20,'--b');yline(4.5,'-w');left =left+width+btw;
-        %trials = sort(table2array(Trialnumbers(3,:)));trials(trials == 0) = []; 
-        set(sp33, 'Position',[left,0.58,width,0.34]);
-        %title(['\fontsize{10}enter social',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);
-        clim(lim);
-        xticklabels({' ',' ',' ',''});xlabel('\fontsize{15}time [s]');
+        trials = sort(table2array(Trialnumbers(3,:)));trials(trials == 0) = []; set(sp33, 'Position',[left,0.58,width,0.34]);
+        title(['\fontsize{10}enter social',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);clim(lim);
+         xticklabels({' ',' ',' ',''});xlabel('\fontsize{15}time [s]');
         sp3= subplot(2,6,9); stdshade(events_averg.allAsc.es',0.3,[0 0 1]);set(sp3, 'Position', [left,0.425,width,0.15]);hold on
-        %stdshade(events_averg_ch.allAsc.es',0.3,[1 1 1]);hold off
+        stdshade(events_averg_ch.allAsc.es',0.3,[1 1 1]);hold off
         xticks([1 11 21 31]);xticklabels({'-3','-2','-1','0'});xtickangle(0);
         ylim(limaverg);
 sp44=subplot(2,6,4),imagesc([-win:0],[1:size(events_averg.allAsc.ee,2)],events_averg.allAsc.ee');xline(-20,'--b');yline(4.5,'-w');left =left+width+btw;
-        %trials = sort(table2array(Trialnumbers(5,:)));trials(trials == 0) = []; 
-        set(sp44, 'Position',[left,0.58,width,0.34]);
-        %title(['\fontsize{10}enter explore',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);
-        clim(lim);
+        trials = sort(table2array(Trialnumbers(5,:)));trials(trials == 0) = []; set(sp44, 'Position',[left,0.58,width,0.34]);
+        title(['\fontsize{10}enter explore',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);clim(lim);
          xticklabels({' ',' ',' ',''});
         sp4= subplot(2,6,10); stdshade(events_averg.allAsc.ee',0.3,[0 0 1]);set(sp4, 'Position', [left,0.425,width,0.15]);hold on
-        %stdshade(events_averg_ch.allAsc.ee',0.3,[1 1 1]);hold off
+        stdshade(events_averg_ch.allAsc.ee',0.3,[1 1 1]);hold off
         xticks([1 11 21 31]);xticklabels({'-3','-2','-1','0'});xtickangle(0);
         ylim(limaverg);
 sp55=subplot(2,6,5),imagesc([-win:0],[1:size(events_averg.allAsc.er,2)],events_averg.allAsc.er');xline(-20,'--b');yline(2.5,'-w');left =left+width+btw;
-        %trials = sort(table2array(Trialnumbers(6,:)));trials(trials == 0) = []; 
-        set(sp55, 'Position',[left,0.58,width,0.34]);
+        trials = sort(table2array(Trialnumbers(6,:)));trials(trials == 0) = []; set(sp55, 'Position',[left,0.58,width,0.34]);
         title(['\fontsize{10}enter run',' trials: 26 ']);clim(lim);
         xticklabels({'-3','-2','-1',' '});
         sp5= subplot(2,6,11); stdshade(events_averg.allAsc.er',0.3,[0 0 1]);set(sp5, 'Position', [left,0.425,width,0.15]);hold on
-        %stdshade(events_averg_ch.allAsc.er',0.3,[1 1 1]);hold off
+        stdshade(events_averg_ch.allAsc.er',0.3,[1 1 1]);hold off
         xticks([1 11 21 31]);xticklabels({'-3','-2','-1','0'});xtickangle(0);
         ylim(limaverg);
 sp66=subplot(2,6,6),imagesc([-win:0],[1:size(events_averg.allAsc.be(1:31,:),2)],events_averg.allAsc.be(1:31,:)');xline(-20,'--b');yline(4.5,'-w');left =left+width+btw;
-        %trials = sort(table2array(Trialnumbers(9,:)));trials(trials == 0) = []; 
-        set(sp66, 'Position',[left,0.58,width,0.34]);
-        %title(['\fontsize{10}block end',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);
-        clim(lim);
+        trials = sort(table2array(Trialnumbers(9,:)));trials(trials == 0) = []; set(sp66, 'Position',[left,0.58,width,0.34]);
+        title(['\fontsize{10}block end',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);clim(lim);
         xticks([-30 -20 -10 0]); xticklabels({' ',' ',' ',' '});
         sp6= subplot(2,6,12); stdshade((events_averg.allAsc.be(1:31,:))',0.3,[0 0 1]);set(sp6, 'Position', [left,0.425,width,0.15]);hold on
-        %stdshade((events_averg_ch.allAsc.be(1:31,:))',0.3,[1 1 1]);hold off
+        stdshade((events_averg_ch.allAsc.be(1:31,:))',0.3,[1 1 1]);hold off
         xticks([1 11 21 31]);xticklabels({'-3','-2','-1','0'});xtickangle(0);
         ylim(limaverg);
         h = axes(f7,'visible','off');left =left+width+btw;

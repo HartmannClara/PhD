@@ -338,6 +338,11 @@ end
 events2 = events;events2(events2 == 3) =0;% replace all 3 (non existant trials)
 events2(8:12,:) = [];
 noEventCells = find((sum(events2,1)) == 0); size(noEventCells,2);
+%% find most common combination of events?
+
+mostcomm = 
+
+
 
 %% Specialization score
 specScore = [];
@@ -881,63 +886,64 @@ f9=figure;% averages across all sessions [xLeft, yBottom, width, height]
 figure(f9);hold on;
 
 sp1 = subplot(2,6,1);imagesc([-win:win],[1:size(events_averg.allAsc.drink,2)],events_averg.allAsc.drink');xline(1,'--w');xline(-20,'--b');yline(4.5,'-w');left=0.13; btw =0.0325; width1 = 0.0170;
-        trials = sort(table2array(Trialnumbers(7,:)));trials(trials == 0) = [];set(sp1, 'Position',[left,0.58,width1*6,0.34]);
-        title(['\fontsize{10}drink',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);clim(lim)
+        set(sp1, 'Position',[left,0.58,width1*6,0.34]);
+        clim(lim)
         xticks([1 11 21 31 41 51 61]); xticklabels({'-3','-2','-1','0','1','2','3'});;ylabel('\fontsize{15}Cells');xlabel('\fontsize{15}time [s]');
         sp7= subplot(2,6,7); stdshade(events_averg.allAsc.drink',0.3,[0 0 1]);set(sp7, 'Position',[left,0.425,width1*6,0.15]);hold on
-        stdshade(events_averg_ch.allAsc.drink',0.3,[1 1 1]);hold off
+        hold off
         xticks([1 11 21 31 41 51 61]);xticklabels({'-3','-2','-1','0','1','2','3'});xlabel('\fontsize{12}time [s]'); ylabel('\fontsize{12}Ca-activity (z-score)');
         ylim(limaverg2);yticks([-1 -0.5 0 0.5 1]);yticklabels({'','-0.5','0','0.5',''});xtickangle(0);
 
 sp2 =subplot(2,6,2);imagesc([-win:win],[1:size(events_averg.allAsc.eat,2)],events_averg.allAsc.eat');xline(1,'--w');yline(4.5,'-w');xline(-20,'--b');left =left+width1*6+btw;
-        trials = sort(table2array(Trialnumbers(8,:)));trials(trials == 0) = [];set(sp2, 'Position',[left,0.58,width1*6,0.34]);
-        title(['\fontsize{10}eat',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);clim(lim)
+        set(sp2, 'Position',[left,0.58,width1*6,0.34]);
+        clim(lim)
         xticks([1 11 21 31 41 51 61]);xticklabels({'-3','-2','-1','0','1','2','3'});
         sp8= subplot(2,6,8); stdshade(events_averg.allAsc.eat',0.3,[0 0 1]);set(sp8, 'Position', [left,0.425,width1*6,0.15]);hold on
-        stdshade(events_averg_ch.allAsc.eat',0.3,[1 1 1]);hold off
+        hold off
         xticks([1 11 21 31 41 51 61]);xticklabels({'-3','-2','-1','0','1','2','3'});
         ylim(limaverg2);yticks([-1 -0.5 0 0.5 1]);yticklabels({'','-0.5','0','0.5',''});xtickangle(0);
 
 sp3 =subplot(2,6,3);imagesc([1:41],[1:size(events_averg.allAsc.soc,2)],events_averg.allAsc.soc');yline(4.5,'-w');xline(11,'--b'); xline(11.2,'--w');left =left+width1*6+btw;
-        trials = sort(table2array(Trialnumbers(4,:)));trials(trials == 0) = [];set(sp3, 'Position',  [left,0.58,width1*4,0.34]);
-        title(['\fontsize{10}social',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);clim(lim)
+        set(sp3, 'Position',  [left,0.58,width1*4,0.34]);
+        clim(lim)
         xticks([1 11 21 31 41]); xticklabels({' ',' ','1','2',' '});
         sp9= subplot(2,6,9); stdshade(events_averg.allAsc.soc',0.3,[0 0 1]);set(sp9, 'Position',  [left,0.425,width1*4,0.15]);hold on
-        stdshade(events_averg_ch.allAsc.soc',0.3,[1 1 1]);hold off
+        hold off
         xlim([1 41]) ;xticks([1 11 21 31 41]);xticklabels({'-1','0','1','2','3'}); 
         ylim(limaverg2);yticks([-1 -0.5 0 0.5 1]);yticklabels({'','-0.5','0','0.5',''});xtickangle(0);
 
 
 sp4 =subplot(2,6,4);imagesc([1:41],[1:size(events_averg.allAsc.expl,2)],events_averg.allAsc.expl');yline(4.5,'-w');xline(11,'--b'); xline(11.2,'--w');left =left+width1*4+btw;
-        trials = sort(table2array(Trialnumbers(16,:)));trials(trials == 0) = [];set(sp4, 'Position',[left,0.58,width1*4,0.34]);
-        title(['\fontsize{10}explore',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);clim(lim); 
+        set(sp4, 'Position',[left,0.58,width1*4,0.34]);
+        clim(lim); 
         xticks([1 11 21 31 41]); xticklabels({' ',' ','1','2',' '});
         sp10= subplot(2,6,10); stdshade(events_averg.allAsc.expl',0.3,[0 0 1]);set(sp10, 'Position',[left,0.425,width1*4,0.15]);hold on
-        stdshade(events_averg_ch.allAsc.expl',0.3,[1 1 1]);hold off
+        hold off
         xlim([1 41]) ;xticks([1 11 21 31 41]);xticklabels({'-1','0','1','2','3'}); 
     ylim(limaverg2);yticks([-1 -0.5 0 0.5 1]);yticklabels({'','-0.5','0','0.5',''});  xtickangle(0);  
 
 
 sp5 =subplot(2,6,5);imagesc([-win:win],[1:size(events_averg.allAsc.run(:,[2 13:end]),2)],events_averg.allAsc.run(:,[2 13:end])');xline(1,'--w');yline(1.5,'-w');xline(-20,'--b');left =left+width1*4+btw;
-        trials = sort(table2array(Trialnumbers(15,:)));trials(trials == 0) = [];set(sp5, 'Position',[left,0.58,width1*6,0.34]);
-        title(['\fontsize{10}run',' trials: ', num2str(trials(1,1))]);clim(lim)
+        set(sp5, 'Position',[left,0.58,width1*6,0.34]);
+        clim(lim)
         xticks([1 11 21 31 41 51 61]);xticklabels({'-3','-2','-1','0','1','2','3'});
         sp11= subplot(2,6,11); stdshade(events_averg.allAsc.run(:,[2 13:end])',0.3,[0 0 1]);set(sp11, 'Position', [left,0.425,width1*6,0.15]);hold on
-        stdshade(events_averg_ch.allAsc.run',0.3,[1 1 1]);hold off
+        hold off
         xlim([1 61]);xticks([1 11 21 31 41 51 61]);xticklabels({'-3','-2','-1','0','1','2','3'});
         ylim(limaverg2);yticks([-1 -0.5 0 0.5 1]);yticklabels({'','-0.5','0','0.5',''});xtickangle(0);
 
 sp6 =subplot(2,6,6);imagesc([1:81],1:size(events_averg.allAsc.home,2),events_averg.allAsc.home(21:101,:)');yline(4.5,'-w');xline(11,'--w');left =left+width1*6+btw;
-        trials = sort(table2array(Trialnumbers(9,:)));trials(trials == 0) = [];set(sp6, 'Position',[left,0.58,width1*8,0.34]);
-        title(['\fontsize{10}nest',' trials: ', num2str(trials(1,1)), '-' , num2str(trials(1,end)) ]);clim(lim)
+        set(sp6, 'Position',[left,0.58,width1*8,0.34]);
+        clim(lim)
         xlim([1 81]);xticks([1 11 21 31 41 51 61 71 81]);xticklabels({' ','2','4','6','8',' ',' ',' ',' '});
         sp12= subplot(2,6,12); stdshade((events_averg.allAsc.home(21:101,:))',0.3,[0 0 1]);set(sp12, 'Position', [left,0.425,width1*8,0.15]);hold on
-        stdshade((events_averg_ch.allAsc.home(21:101,:))',0.3,[1 1 1]);hold off
+        hold off
         xlim([1 81]);xticks([1 11 21 31 41 51 61 71 81]);xticklabels({'-1','0','1','2','3','4','5','6','7'});linkaxes([sp6, sp12],'x');
         ylim(limaverg2); yticks([-1 -0.5 0 0.5 1]);yticklabels({'','-0.5','0','0.5',''});xtickangle(0);
 
         h = axes(f9,'visible','off');left =left+width1*8+btw;
         c = colorbar(h,'Position',[left 0.425 0.01 0.49]);
+        colormap(CustomColormap2);
         ylabel(c,'Ca+-response (z-scored, s.d.)','FontSize',10,'Rotation',270);
         c.Label.Position(1) = 4;
         caxis(h,lim);        
@@ -972,7 +978,7 @@ subplot(2,4,4),imagesc([-win:0],[1:size(events_averg.allAsc.ef_c,2)],events_aver
        xticks([1 11 21 31 ]);xticklabels({'-3','-2','-1','0'});
         ylim(limaverg2);
         h = axes(f10,'visible','off');
-        c = colorbar(h,'Position',[0.93 0.45 0.02 0.45]);
+        c = colorbar(h,'Position',[0.93 0.45 0.02 0.45],CustomColormap1);
         ylabel(c,'Ca+-response (z-scored, s.d.)','FontSize',10,'Rotation',270);
         c.Label.Position(1) = 2.5;
         caxis(h,lim);        

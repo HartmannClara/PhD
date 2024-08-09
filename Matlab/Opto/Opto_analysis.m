@@ -4,7 +4,8 @@
 clear all; close all;
 animals = ['A','B', 'C', 'D', 'E', 'F'];
 %intervals = [29, 43, 22, 23, 20, 17];%batch1
-intervals = [41, 25, 31, 18, 14, 18];%batch2
+%intervals = [41, 25, 31, 18, 14, 18];%batch2
+intervals = [15, 23, 15, 21, 12, 18];%batch3
 %animals = ['A', 'C', 'D', 'E', 'F'];
 f0 = figure;
 f1 = figure;
@@ -12,13 +13,13 @@ f2 = figure;
 f3 = figure;
 f4 = figure;
 f5 = figure;
-f6 = figure;
+%f6 = figure;
 allMt = table;
 perc = [];mz_perc = [];
 Opto_data_all =[];
 for i=1:size(animals,2)
     animal = animals(i);
-    events_path=['C:\Users\cha206\Desktop\OptoData\animal_' animal '2_events'];
+    events_path=['C:\Users\cha206\Desktop\OptoData\animal_' animal '3_events'];
     events=import_opto(events_path);
     experiment = table2array(events(:,"experiment"));
     % remove all inh_1 or hab experiments
@@ -30,8 +31,8 @@ for i=1:size(animals,2)
 
 
     %start= datetime(['2024-03-04 10:00:00.000'],'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');%start day
-    start= datetime(['2024-03-27 10:00:00.000'],'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');%start day
-    days = 2;%how many days to plot
+    start= datetime(['2024-06-14 10:00:00.000'],'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');%start day
+    days = 6;%how many days to plot
     hab = 0; %change if not habitutation
 
     mid = start + day(1);
@@ -110,10 +111,12 @@ for i=1:size(animals,2)
 %         ylim([0 100]);
 
     %plot latency to 4th, 5th or 6th pellet
-    if animal == "D"| animal == "E"
-         col = "#4DBEEE";
+       if animal == "A"| animal == "C"
+         col = "#77AC30";
+         %col = "#4DBEEE";
     else
-        col = "#77AC30";
+        col = "#4DBEEE";
+        %col = "#77AC30";
     end 
 
     ret_latency = table2array(retrievals(:,"Latency"));
@@ -345,6 +348,12 @@ for i=1:size(animals,2)
     C = Ctrl_meal_ends(:,3);C(:,2) = 0;
     mlas = vertcat(O(:,2), C(:,2));
     bigm = vertcat(O(:,1), C(:,1));
+    %look for errors:
+    er= find(bigm > 40);
+    bigm(er)=[];
+    mlas(er)= [];
+
+
 %     if animal == 'A'
 %             small_meals = find(bigm < 4);%%%%%%%%%%%%%%change meal size here
 %     else 
@@ -354,11 +363,6 @@ for i=1:size(animals,2)
 %     %mlas(small_meals)= [];
     if hab == 1
        mlas(find(mlas == 1)) = 0; 
-    end 
-    if animal == "D"| animal == "E"
-         col = "#4DBEEE";
-    else
-        col = "#77AC30";
     end 
 
     figure(f4);

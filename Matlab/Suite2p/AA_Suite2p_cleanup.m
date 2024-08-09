@@ -1,10 +1,12 @@
 % suite2p cleanup 
 % saves F.csv and Fneu.csv in My_V4_Miniscope folder of correct time folder
+% corrects merged cells and matches cell labels if needed
+%% manually!
 %16.05.2023
 clearvars -except ci_data;
 % extract ids of actual cells
 %CAREFUL no cell 0 in Matlab!!!!!!!!!!!!!!!!
-merged = true;
+merged = false;
 iscellMerged = iscell;
 if merged == true
     mergedCells = [33];
@@ -40,7 +42,9 @@ end
 %%
 %split signal and neuropil signal into blocks
 %iterate through first cell and find first black frame of new block
-BlackFrames = find(F_Cells(1,:) < 20);%play with this value until all starts are found
+plot(F_Cells(1,:));
+BlackFrames = find(F_Cells(1,:) < 35);%play with this value until all starts are found, usually double the nr bc first 2 frames are black
+
 for i = 1:(size(BlackFrames,2))
     if BlackFrames(i+1) == BlackFrames(i)+1 
        BlackFrames(i+1) = [];
@@ -48,7 +52,7 @@ for i = 1:(size(BlackFrames,2))
     if BlackFrames(i+1) == BlackFrames(i)+2 
        BlackFrames(i+1) = [];
     end 
-end 
+end %always throws a warning, thats ok!!!
 %plot(F_Cells(1,:))
 BlackFrames(length(BlackFrames)+1) = (size(F_Cells,2)+1);% make the end of the last block
 %cut signal (F_Cells and Fneu_Cells into blocks according to black frames
@@ -57,7 +61,7 @@ for i = 1:(size(BlackFrames,2)-1)
     Sessions(i).Fneu = Fneu_Cells(:,[BlackFrames(i):BlackFrames(i+1)-1]);
 end    
 %% Import Log file and check for matching frame numbers
-%LogFrames = Log(2:2:end,1); FoundFrames = 
+%LogFrames = Log(2:2:end,1);
 %FrameDiff = LogFrames - size(Sessions.F,2)
 
 
@@ -66,8 +70,8 @@ topLevelFolder = uigetdir();
 % Get a list of all files and folders in this folder.
 folders = getFolders(topLevelFolder);% if there are bad recordings, exclude them here!
 %folders = folders(2:6,1);
-before = 0;
-for i = 1:size(Sessions,2)%%%%split here if days were analyzed together
+before = 0;%add previously saved sessions here
+for i = 1:11%%%%split here if days were analyzed together
     ImgS = char(folders{(i-before),1});
     savename = [topLevelFolder '\' ImgS '\My_V4_Miniscope\'];
     writematrix(Sessions(i).F, [savename 'F.csv']);

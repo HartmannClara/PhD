@@ -4,7 +4,7 @@ set(0,'defaultAxesFontSize',10);
 %% creates 95 and 5 percentile tables for every cell for every event
 %09.06.2023
 %% for shuffled data
-fn=fieldnames(events_averg); Iter = 100;%%% Change nur of iterations here!!!
+fn=fieldnames(events_averg); Iter = 10;%%% Change nur of iterations here!!!
 for ii=1:size(fn,1)
     fn1=fieldnames(events_averg.(fn{ii})); 
         for j=20:numel(fn1) % only process baselined data
@@ -94,9 +94,9 @@ for ii=1:numel(fn1)
 end
 
 % combine all cells together
-fn1=fieldnames(events_averg.shufCells.g5);
+fn1=fieldnames(events_averg.shufCells.g11);
     for j=1:numel(fn1)
-        events_averg.shufCells.all.(fn1{j}) = cat(2,events_averg.shufCells.g5.(fn1{j}),events_averg.shufCells.g4.(fn1{j}),events_averg.shufCells.g2.(fn1{j}),events_averg.shufCells.g12.(fn1{j}));
+        events_averg.shufCells.all.(fn1{j}) = cat(2,events_averg.shufCells.g11.(fn1{j}),events_averg.shufCells.g12.(fn1{j}),events_averg.shufCells.g14.(fn1{j}),events_averg.shufCells.g15.(fn1{j}),events_averg.shufCells.g19.(fn1{j}),events_averg.shufCells.g20.(fn1{j}),events_averg.shufCells.g4.(fn1{j}),events_averg.shufCells.g42.(fn1{j}));
     end 
 % get 5 and 95 percentile values
 fn = fieldnames(events_averg.shufCells.all);

@@ -24,6 +24,7 @@ for ii=1: numel(fn)
     exd_averg_bsl=[];exf_averg_bsl=[];exs_averg_bsl=[];exe_averg_bsl=[];exr_averg_bsl=[];imstop_averg_bsl=[];run_averg_bsl=[];soc_averg_bsl_m=[];
     TimeSpecs = [];DecSpecs = [];
     ed_averg_nc=[];ef_averg_nc=[];er_averg_nc=[];ed_averg_nc_bsl=[];ef_averg_nc_bsl=[];er_averg_nc_bsl=[];
+    (fn{ii})
     for j=1: numel(fn1)%day
         fn2=fieldnames(ci_data.bsl.(fn{ii}).(fn1{j}));
         for k=1: numel(fn2)
@@ -38,7 +39,7 @@ for ii=1: numel(fn)
                 else
                 latency =  ci_data.bsl.(fn{ii}).(fn1{j})(s).(fn2{k}).(fn3{3}).(3); % latency to consume in ms   
                 new_event_frames= ci_data.bsl.(fn{ii}).(fn1{j})(s).(fn2{k}).(fn3{3}).(5);% in events column 5 (frame)
-                event_type = ci_data.bsl.(fn{ii}).(fn1{j})(s).(fn2{k}).(fn3{3}).(4);
+                event_type = ci_data.bsl.(fn{ii}).(fn1{j})(s).(fn2{k}).(fn3{3}).(4);   
                 raw_f_res=ci_data.bsl.(fn{ii}).(fn1{j})(s).(fn2{k}).(fn3{1});
                 Fneu = ci_data.bsl.(fn{ii}).(fn1{j})(s).(fn2{k}).(fn3{2});
 
@@ -47,6 +48,18 @@ for ii=1: numel(fn)
                 
                 df_f_trace = dFoF(subneuro_trace);%df/f
                 raw_f= zscore(df_f_trace,0,1);% zscored using sample sd
+%% Shuffles
+                shuff = [];iter=2;%nr of iterations, ideally 1000
+                shufFac = randi([100 1000],1,iter);
+                for f = 1:(numel(shufFac))
+                    shuff(:,:,f)= circshift(raw_f,(round((shufFac(f)*size(raw_f,1))/1000)),1);%shifts raw_f by random shufFac
+                end
+                %% essentially gives me iter times raw_f files which are shifted and can be analyzed
+                for sh = 1:size(shuff,3)
+                    raw_f = shuff(:,:,sh);
+
+
+
              %% check if session is usable
                 ee_events = find(event_type=='enter_explore'); es_events = find(event_type=='enter_social');
                 exf_events = find(event_type=='exit_feed');exd_events = find(event_type=='exit_drink');exr_events = find(event_type=='exit_run');
@@ -393,7 +406,7 @@ for ii=1: numel(fn)
     events_averg.(fn{ii}).ef_averg_nc_bsl = ef_averg_nc_bsl;
     events_averg.(fn{ii}).er_averg_nc_bsl = er_averg_nc_bsl;
 end
-
+end
 %%
 
 % if events_averg entries and consumptions dont line up it is because the
@@ -402,5 +415,5 @@ end
 %Specs.Times = {'food' 'run' 'explore' 'social' 'drink' 'whole block'};
 %Specs.FoodExitAll = FoodExitAll;Specs.RunExitAll = RunExitAll;Specs.ExpExitAll = ExpExitAll;Specs.SocExitAll = SocExitAll;
 %Specs.DrinkExitAll = DrinkExitAll;Specs.ImgStopAll =ImgStopAll;
-%save("events_averg_s2p.mat", "events_averg");
+%save("events_averg_s2p_0426.mat", "events_averg");
 %save("Specs.mat", "Specs");

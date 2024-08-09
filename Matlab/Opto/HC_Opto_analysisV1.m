@@ -1,0 +1,919 @@
+% analysis of OPTo files from Optofiles struct
+% plotting 
+
+%% loop for all animals
+clear all; close all;
+intervals = [29, 43, 22, 23, 20, 17, 43, 22, 31, 18, 14, 18, 15, 23, 15, 21, 12, 18];%batch1%batch2%batch3 % 18 bc batch2 has 2 animals from b1 remeasured
+inh= [3, 4, 4, 4, 4, 4, 3, 3, 4, 4, 4, 4, 4, 4, 3, 4, 4, 4];
+f0 = figure;
+f1 = figure;
+f2 = figure;
+allMt = table;
+perc = [];mz_perc = [];
+Opto_data_all =[];
+load("Optodata.mat");
+fn=fieldnames(Optodata);
+%% corrections in the dataset 
+%loop through hab data of batch one and correct experiment name to "hab"
+%and meals to short meals, in b1 hab was performed with inh 1 code but
+%fibers where unplugged for testing
+for j = 1:6
+    events = Optodata(j).hab;
+    exp = table2array(events(:,"experiment")); i1 = find(exp == "inh_1");
+    Optodata(j).hab.experiment(i1) = "hab";
+    Optodata(j).hab.Laser(i1) = 0;
+    cmeals = table2array(events(:,"Type")); Om = find(cmeals == "Opto meal ended");Cm = find(cmeals == "Control meal ended");
+    Optodata(j).hab.Type(Om) = "Short meal ended";Optodata(j).hab.Type(Cm) = "Short meal ended";
+end
+
+%%
+analysis = "inh_4"; % "inh_1 %%% change!
+if analysis == "inh_4"
+    anm = 1:size(Optodata,2);
+else 
+    anm = [1:6 9:18];
+end    
+
+for i = anm
+    i%print so you can monitor process
+    animal = Optodata(i).Label;
+    if analysis == "inh_4"
+        events = Optodata(i).inh4;
+    else 
+        events = Optodata(i).inh1;
+    end
+    habt = Optodata(i).hab;
+
+    % if refeeding should also be analyzed with the inh_4 data:
+    %RF = Optodata(i).RF;
+    %events2 = vertcat(events,RF);
+
+    %for animals that have both inh4 and inh3 expeiments, select which data
+    %to use:
+    if i == 7
+        exp = table2array(events(:,"experiment"));
+        %inh4 = find(exp == "inh_4");
+        inh4 = find(exp == "inh_3");%exclude inh_3 data
+        events(inh4,:) = [];
+    elseif i == 8  
+        exp = table2array(events(:,"experiment"));
+        %inh4 = find(exp == "inh_4");
+        inh4 = find(exp == "inh_3");%change%here!!!!!!!!!!!!!!!!!!!!!!
+        events(inh4,:) = [];
+    end
+   
+
+   %%inh_4 % change start times here if you want to exclude some days. also
+   %%change below days variable
+    if i == 1 || i == 2 || i == 3 || i == 4 || i == 5 || i == 6 %batch1
+        start= datetime(['2024-03-04 10:00:00.000'],'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');%start day
+    elseif i == 10 || i == 11   %batch2 animals where day 1 and 2 need to be excluded bc of light leak
+        start= datetime(['2024-03-25 10:00:00.000'],'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');%start day
+    elseif i == 7 || i == 8 || i == 9 || i == 12%batch2
+        start= datetime(['2024-03-25 10:00:00.000'],'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');%start day
+    else %batch 3
+        start= datetime(['2024-06-14 10:00:00.000'],'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');%start day
+    end
+    days = 8;%how many days to plot 
+    mid = start + day(1);
+    stop = start + day (days);
+
+    x=datetime(events.(1),'InputFormat','yyyy-MM-dd HH:mm:ss.SSS'); 
+    %% remove faulty  days 
+   if i == 4
+       errorday = find(x.Day == 10);%cables bitten through
+        events(errorday,:)=[];
+   end
+
+    %inh_1
+%     if i == 1 || i == 2 || i == 3 || i == 4 || i == 5 || i == 6 
+%         start= datetime(['2024-03-14 10:00:00.000'],'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');%start day
+%     elseif i == 10 || i == 11   
+%         start= datetime(['2024-04-06 10:00:00.000'],'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');%start day
+%     elseif i == 7 || i == 8 || i == 9 || i == 12
+%         start= datetime(['2024-04-06 10:00:00.000'],'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');%start day
+%     else 
+%         start= datetime(['2024-06-22 10:00:00.000'],'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');%start day
+%     end
+%     days = 2;%how many days to plot 
+%     mid = start + day(1);
+%     stop = start + day (days);
+
+    % events analysis
+    x=datetime(events.(1),'InputFormat','yyyy-MM-dd HH:mm:ss.SSS'); events(find(x<start),:)=[];
+    Type = table2array(events(:,"Type"));
+    Pellets = table2array(events(:,"Pellet_number"));
+    Time = datetime(table2array(events(:,"Date_Time")),'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
+    latency= table2array(events(:,'Latency'));
+    retrievals = find(Type == "Pellet_Retrieved");
+    retrievals = events(retrievals,:);
+    ret_lat = retrievals(:,"Latency");
+    ret_las = retrievals(:,"Laser");
+    ret_dat = retrievals(:,"Date_Time");
+    
+%habituation data
+    habType = table2array(habt(:,"Type"));
+    habPellets = table2array(habt(:,"Pellet_number"));
+    habTime = datetime(table2array(habt(:,"Date_Time")),'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
+    hablatency= table2array(habt(:,'Latency'));    
+
+    %plot latency to  4th, 5th or 6th 7th 8th 9th pellet
+    if Optodata(i).Label =='C'
+         col = "#4DBEEE";
+    else
+        col = "#77AC30";
+    end 
+    ret_latency = table2array(retrievals(:,"Latency"));%rentrieval latency
+    ret_pel = table2array(retrievals(:,"Pellet_number"));% pellet nr retrieved
+    ret_laser = table2array(retrievals(:,"Laser"));%laser status of pellet (on/off)
+    lat_4 = ret_latency((find(ret_pel == 4)));short = find(lat_4 < 2);lat_4(short) = [];
+    las_4 = ret_laser((find(ret_pel == 4)));las_4(short) = [];
+    lat_5 = ret_latency((find(ret_pel == 5)));short = find(lat_5 < 2);lat_5(short) = [];
+    las_5 = ret_laser((find(ret_pel == 5)));las_5(short) = [];
+    lat_6 = ret_latency((find(ret_pel == 6)));short = find(lat_6 < 2);lat_6(short) = [];
+    las_6 = ret_laser((find(ret_pel == 6)));las_6(short) = [];
+    lat_7 = ret_latency((find(ret_pel == 7)));short = find(lat_7 < 2);lat_7(short) = [];
+    las_7 = ret_laser((find(ret_pel == 7)));las_7(short) = [];
+    lat_8 = ret_latency((find(ret_pel == 8)));short = find(lat_8 < 2);lat_8(short) = [];
+    las_8 = ret_laser((find(ret_pel == 8)));las_8(short) = [];
+    lat_9 = ret_latency((find(ret_pel == 9)));short = find(lat_9 < 2);lat_9(short) = [];
+    las_9 = ret_laser((find(ret_pel == 9)));las_9(short) = [];
+    %collect data for plotting
+    LatencyInh4(i).pel4 = lat_4;LatencyInh4(i).las4 = las_4;
+    LatencyInh4(i).pel5 = lat_5;LatencyInh4(i).las5 = las_5;
+    LatencyInh4(i).pel6 = lat_6;LatencyInh4(i).las6 = las_6;
+    LatencyInh4(i).pel7 = lat_7;LatencyInh4(i).las7 = las_7;
+    LatencyInh4(i).pel8 = lat_8;LatencyInh4(i).las8 = las_8;
+    LatencyInh4(i).pel9 = lat_9;LatencyInh4(i).las9 = las_9;
+
+%% cut meals and log single pellet trials if trial type consistent:
+
+    Opto_meal_ends = find(Type == "Opto meal ended");
+    Ctrl_meal_ends = find(Type == "Control meal ended");
+    Short_meal_ends = find(Type == "Short meal ended");
+    Hab_meal_ends = find(habType == "Short meal ended");
+
+    Opto_meal_ends_times = Time(Opto_meal_ends(:,1));% times of the meals
+    Ctrl_meal_ends_times = Time(Ctrl_meal_ends(:,1));
+    Hab_meal_ends_times = habTime(Hab_meal_ends(:,1));
+
+    % make a label which day of the exp the meal is (not actual data but
+    % day 1-8
+    OptodayLabel= Opto_meal_ends_times.Day;ODL= unique(OptodayLabel);
+    for k = 1:size(ODL)
+        kk=find(OptodayLabel == ODL(k));
+        OptodayLabel(kk) = k;
+    end
+    CtrldayLabel= Ctrl_meal_ends_times.Day;CDL= unique(CtrldayLabel);
+    for k = 1:size(CDL)
+        kk=find(CtrldayLabel == CDL(k));
+        CtrldayLabel(kk) = k;
+    end
+    HabdayLabel= Hab_meal_ends_times.Day;HDL= unique(HabdayLabel);
+    for k = 1:size(HDL)
+        kk=find(HabdayLabel == HDL(k));
+        HabdayLabel(kk) = k;
+    end
+    
+%% find meal per day nr and save
+    start1=start;
+    OptoMealCounts=[];
+    for t= 1:8
+        omet = Opto_meal_ends_times;
+        start2= start1 + day(1);
+        omet(find(omet<start1),:)=[];
+        omet(find(omet>start2),:)=[];
+        Optomealsize_day = size(omet,1);
+        OptoMealCounts = [OptoMealCounts, Optomealsize_day];
+        start1=start2;
+    end
+
+    start1=start;
+    CtrlMealCounts=[];
+    for t= 1:8
+        cmet = Ctrl_meal_ends_times;
+        start2= start1 + day(1);
+        cmet(find(cmet<start1),:)=[];
+        cmet(find(cmet>start2),:)=[];
+        Ctrlmealsize_day = size(cmet,1);
+        CtrlMealCounts = [CtrlMealCounts, Ctrlmealsize_day];
+        start1=start2;
+    end
+    %save across animals
+    CtrlCounts(i,:) = CtrlMealCounts;
+    OptoCounts(i,:) = OptoMealCounts;
+%% Meal sizes
+    Optomeals = Opto_meal_ends;
+    Ctrlmeals = Ctrl_meal_ends;
+    Habmeals = Hab_meal_ends;
+
+    for e = 1:size(Opto_meal_ends,1)
+        en = Opto_meal_ends(e);
+        ms = Pellets(en);
+        Opto_meal_ends(e,3) = ms;
+        Opto_meal_ends(e,2) = latency(en-ms);  
+    end    
+    for e = 1:size(Ctrl_meal_ends,1)
+        en = Ctrl_meal_ends(e);
+        ms = Pellets(en);
+        Ctrl_meal_ends(e,3) = ms;
+        Ctrl_meal_ends(e,2) = latency(en-ms);  
+    end   
+    for e = 1:size(Hab_meal_ends,1)
+        en = Hab_meal_ends(e);
+        ms = habPellets(en);
+        Hab_meal_ends(e,3) = ms;
+        Hab_meal_ends(e,2) = hablatency(en-ms);  
+    end 
+
+    ret_dat = datetime(table2array(ret_dat),'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
+    Otimes=Time(Optomeals);
+    Ctimes =Time(Ctrlmeals);
+    Htimes = Time(Habmeals);
+    Osizes =table2array(events(Optomeals,"Pellet_number"));
+    Csizes = table2array(events(Ctrlmeals,"Pellet_number"));
+    
+% Opto plots using code meal ends
+    H = Hab_meal_ends(:,3);H(:,2) = -1;H(:,3) = HabdayLabel;
+    O = Opto_meal_ends(:,3);O(:,2) = 1;O(:,3) = OptodayLabel;
+    C = Ctrl_meal_ends(:,3);C(:,2) = 0;C(:,3) = CtrldayLabel;
+    mlas = vertcat(O(:,2), C(:,2), H(:,2));
+    bigm = vertcat(O(:,1), C(:,1), H(:,1));
+    dayL = vertcat(O(:,3), C(:,3), H(:,3));
+    times = 
+
+
+    %collect data for analysis
+    opt = [bigm,mlas];
+    opt(:,5)= dayL;
+    for o = 1:size(opt,1)
+        if Optodata(i).Label == "C" 
+            opt(o,4) = 0;
+        else
+            opt(o,4) = 1; 
+        end
+        opt(o,3) = i;
+    end
+    
+%save
+    Opto_data_all = vertcat(Opto_data_all,opt);% meal size, meal type (-1 hab, 0 ctrl, 1 laser), animal, ctrl or arch(1), day of the meal (1-8) 
+    Opto_data_n(i,1) = size(find(mlas == 0),1);%control
+    Opto_data_n(i,2) = size(find(mlas == 1),1);%laser   
+end 
+
+%% Start plotting
+% manual corrections data
+%remove error meals (really high numbers)
+Opto_data_all(Opto_data_all(:,1)>50,:) = [];
+
+% for inh_4
+%if inh_4 of animal B and C are used combine with data from b1:
+Opto_data_n(2,:)= Opto_data_n(2,:) + Opto_data_n(7,:);
+Opto_data_n(3,:)= Opto_data_n(3,:) + Opto_data_n(8,:);
+Opto_data_n(7:8,:) = [];
+mean(Opto_data_n(:,1)); std(Opto_data_n(:,1));%ctrl meals
+mean(Opto_data_n(:,2)); std(Opto_data_n(:,2));%laser meals
+
+%plot opto boxplots outside of loop to combine data of animals measured in both
+%batches
+Opto_data_cmb = Opto_data_all;
+
+%if inh_3 for B and C in batch 2 is used
+% Opto_data_cmb(find(Opto_data_cmb(:,3)== 2),:) =[];
+% Opto_data_cmb(find(Opto_data_cmb(:,3)== 3),:) =[];
+% Opto_data_all(find(Opto_data_all(:,3)== 2),:) =[];
+% Opto_data_all(find(Opto_data_all(:,3)== 3),:) =[];
+
+%correct meal sizes by replacing 7 and 8  with new labels 2 and 3
+animB2 = find(Opto_data_cmb(:,3)== 7);Opto_data_cmb(animB2,3) = 2;
+animC2 = find(Opto_data_cmb(:,3)== 8);Opto_data_cmb(animC2,3) = 3;
+
+%habituation data
+% correct hab data to remove small meals, inh_4 or inh_1 already only has
+% meals eaqual or bigger than 3
+% smallhab = find(Opto_data_cmb(:,1) < 4);%rem all meals smaller than 3
+% Opto_data_cmb(smallhab,:) = [];
+% a1end = (find(Opto_data_cmb(:,3) == 1));
+
+%smallhab2 = find(Opto_data_cmb(a1end(end)+1:end,1) < 4);%rem all meals smaller than 4 from all but animal 1
+%Opto_data_cmb(smallhab2+a1end(end),:) = [];
+
+%%
+%remove hab data
+Opto_data_cmb(Opto_data_cmb(:,2)==-1,:) = [];
+
+%remove error meals (really high numbers)
+Opto_data_cmb(Opto_data_cmb(:,1)>50,:) = [];
+
+
+f4 = figure;
+figure(f4);
+    %anim  = [1 2 3 4 5 6 7 8 9 10]
+%         pl = [1,5,6,7,2,8,9,3,4,10];
+%         name = {'Ab1f','Eb1m','Db2m','Eb2f','Bb1f','Cb1f','Db1f','Fb1m','Cb2m','Fb2f'};
+% b3 [11,12,13,14,15,16] [Ab3m, Bb3m, Cb3f, Db3f, Eb3m, Fb3m] [A C A C C C]
+        %Optodata_corr2 = Optodata; Optodata_corr(7:8) = [];
+        %IDs = {'Ab1f','Bb1f','Cb1f','Db1f','Eb1m','Fb1m','Cb2m','Db2m','Eb2f','Fb2f','Ab3m','Bb3m','Cb3f','Db3f','Eb3m','Fb3m'};
+
+        %Optodata_corr2.ID = {'Ab1f','Bb1f','Cb1f','Db1f','Eb1m','Fb1m','Cb2m','Db2m','Eb2f','Fb2f','Ab3m','Bb3m','Cb3f','Db3f','Eb3m','Fb3m'};
+        IDs = {'Ab1f','Bb1f','Cb1f','Db1f','Eb1m','Fb1m','Cb2m','Db2m','Eb2f','Fb2f','Ab3m','Bb3m','Cb3f','Db3f','Eb3m','Fb3m'};%org order
+        name = {'Ab1f','Eb1m','Db2m','Eb2f','Bb3m','Db3f','Eb3m','Fb3m','Bb1f','Cb1f','Db1f','Fb1m','Cb2m','Fb2f', 'Ab3m','Cb3f'};% order i want to plot
+    %inh_1 animal 4 not usable, ripped out cables
+        %ctrl = {'Ab1f','Eb1m','Db2m','Eb2f','Bb3m','Db3f','Eb3m','Fb3m'} % [1 5 8 9 12 14 15 16]
+        %arch = {'Bb1f','Cb1f','Db1f','Fb1m','Cb2m','Fb2f', 'Ab3m','Cb3f'} % [2 3 4 6 7 10 11 13]
+
+        i=1;
+        for a = [1:6,9:18]
+            mlas = Opto_data_cmb((find(Opto_data_cmb(:,3)==a)),2);%laser
+            bigm = Opto_data_cmb((find(Opto_data_cmb(:,3)==a)),1);%meals
+            Group = Opto_data_cmb((find(Opto_data_cmb(:,3) == a)),4);
+
+            if Group(1,1) == 0
+                col = "#4DBEEE";
+            else
+                col = "#77AC30";
+            end 
+
+            pl = find(contains(name,IDs(i)));
+            tit = name(pl);
+
+            subplot(1,16,pl);boxchart(mlas,bigm,BoxFaceColor=col);hold on;
+            swarmchart(mlas,bigm,".");
+            ylabel('meal size');
+
+            title(tit);
+            
+            xticks([-1 0 1]);xticklabels({'hab','control', 'laser on'});
+            ylim([0 30]);
+            ctrl_mean = mean(bigm(find(mlas == 0)));
+            las_mean = mean(bigm(find(mlas == 1)));
+            hab_mean = mean(bigm(find(mlas == -1)));
+            plot([-1 0 1],[hab_mean ctrl_mean las_mean], 'k*');%xy 
+            i=i+1;
+        end   
+%% make one plot for control and one for arch
+Optoanimals = Opto_data_cmb(find(Opto_data_cmb(:,4)== 1),:);
+Ctrlanimals = Opto_data_cmb(find(Opto_data_cmb(:,4)== 0),:);
+f4 = figure;
+figure(f4);
+subplot(1,2,1); boxchart(Ctrlanimals(:,2),Ctrlanimals(:,1),BoxFaceColor="#4DBEEE");hold on;
+ylim([3 25]);xticks([0 1]);xticklabels({'control', 'laser on'});
+subplot(1,2,2); boxchart(Optoanimals(:,2),Optoanimals(:,1),BoxFaceColor="#77AC30");hold on;
+ylim([3 25]);xticks([0 1]);xticklabels({'control', 'laser on'});
+
+
+
+%% just means with std connected to matched no laser trials Opto data cmb= % meal size, meal type (-1 hab, 0 ctrl, 1 laser), animal, ctrl or arch(1), day of the meal (1-8) 
+f4 = figure;
+figure(f4);
+    %anim  = [1 2 3 4 5 6 7 8 9 10]
+        %pl = [1,5,6,7,2,8,9,3,4,10];
+        %name = {'Ab1f','Eb1m','Db2m','Eb2f','Bb1f','Cb1f','Db1f','Fb1m','Cb2m','Fb2f'};
+        i=1;
+        % remove days from all animals:
+        Opto_data_corr = Opto_data_cmb((find(Opto_data_cmb(:,5)~=1)),:);% set 1 and 2 to 0 for no correction
+        Opto_data_corr = Opto_data_corr((find(Opto_data_corr(:,5)~=2)),:);
+        %Opto_data_corr = Opto_data_corr((find(Opto_data_corr(:,5)~=3)),:);
+
+        for a = [1:3,4:6,9:18]
+            mlas = Opto_data_corr((find(Opto_data_corr(:,3)==a)),2);%laser
+            bigm = Opto_data_corr((find(Opto_data_corr(:,3)==a)),1);%meals
+            Group = Opto_data_corr((find(Opto_data_corr(:,3) == a)),4);
+            ctrl_mean = mean(bigm(find(mlas == 0)));
+            las_mean = mean(bigm(find(mlas == 1)));
+
+            optomice(i,1)=ctrl_mean;
+            optomice(i,2)=las_mean;
+            optomice(i,3)=Group(1,1);
+            i=i+1;
+            if Group(1,1) == 0
+                plt = 1;%plot 1 control
+                subplot(1,2,1);plot([0 1],[ctrl_mean las_mean], 'o',"Color","#4DBEEE",'LineWidth',2);hold on;
+                plot([0 1],[ctrl_mean las_mean], '-',"Color","#4DBEEE",'LineWidth',2);
+                ylabel('meal size');
+                title('Control');
+                xticks([0 1]);xticklabels({'control', 'laser on'});
+                ylim([3 10]);
+                xlim([-0.5 1.5]);
+            else
+                plt = 2;%plot 2 opto
+                subplot(1,2,2);plot([0 1],[ctrl_mean las_mean], 'o', "Color","#77AC30", 'LineWidth',2); hold on;
+                plot([0 1],[ctrl_mean las_mean], '-', "Color","#77AC30",'LineWidth',2);
+                ylabel('meal size');
+                title('ArchT');
+                xticks([0 1]);xticklabels({'control', 'laser on'});
+                ylim([3 10]);
+                xlim([-0.5 1.5]);
+            end    
+        end   
+
+hold off;
+
+
+%% just means split into days? % meal size, meal type (-1 hab, 0 ctrl, 1 laser), animal, ctrl or arch(1), day of the meal (1-8) 
+f4 = figure;
+figure(f4);
+    %anim  = [1 2 3 4 5 6 7 8 9 10]
+        %pl = [1,5,6,7,2,8,9,3,4,10];
+        %name = {'Ab1f','Eb1m','Db2m','Eb2f','Bb1f','Cb1f','Db1f','Fb1m','Cb2m','Fb2f'};
+        i=1;
+        % remove days from all animals:
+        Opto_data_corr = Opto_data_cmb((find(Opto_data_cmb(:,5)~=0)),:);% set 1 to 0 for no correction
+        %Opto_data_corr = Opto_data_corr((find(Opto_data_corr(:,5)~=0)),:);
+        %Opto_data_corr = Opto_data_corr((find(Opto_data_corr(:,5)~=3)),:);
+
+        Opto_data_ctrl = Opto_data_corr(find(Opto_data_corr(:,2)==0),:);
+        Opto_data_las = Opto_data_corr(find(Opto_data_corr(:,2)==1),:);
+
+        for a = [1:3,4:6,9:18]%without inh_3 for 7/8
+            mdaylas = Opto_data_las((find(Opto_data_las(:,3)==a)),5);%array which has day values for laser meals 
+            mdayctrl = Opto_data_ctrl((find(Opto_data_ctrl(:,3)==a)),5);%carray which has day values for ctrl meals
+
+            bigmlas = Opto_data_las((find(Opto_data_las(:,3)==a)),1);%array which has meal sizes for laser meals 
+            bigmctrl = Opto_data_ctrl((find(Opto_data_ctrl(:,3)==a)),1);%array which has meal sizes for ctrl meals
+
+            Grouplas = Opto_data_las((find(Opto_data_las(:,3) == a)),4);Group =Grouplas(1,1);%ctrl(0) or arch (1) group for this animal 
+            LMtimes = ;
+            CMtimes = ;
+            
+           
+            %loop through the days to get day means and plot 
+            for dd = 1:8%size(unique(mdaylas),1)
+                ctrl_mean = mean(bigmctrl(find(mdayctrl == dd)));
+                las_mean = mean(bigmlas(find(mdaylas == dd)));
+
+                optomice(dd,1)=ctrl_mean;
+                optomice(dd,2)=las_mean;
+                optomice(dd,3)=Group;
+
+                Optom(a).data = optomice;
+            end
+        end
+        Optom(7) = [];Optom(7) = [];
+       
+
+                i=i+1;
+                figure(f4);
+                %control trial mean against days colored by animal
+                    plot([0 1],[ctrl_mean las_mean], 'o',"Color","#4DBEEE",'LineWidth',2);hold on;
+                    plot([0 1],[ctrl_mean las_mean], '-',"Color","#4DBEEE",'LineWidth',2);
+                    ylabel('meal size');
+                    title('Control');
+                    xticks([0 1]);xticklabels({'control', 'laser on'});
+                    ylim([3 10]);
+                    xlim([-0.5 1.5]);
+                %laser trial mean against days colored by animal
+                    plot([0 1],[ctrl_mean las_mean], 'o', "Color","#77AC30", 'LineWidth',2); hold on;
+                    plot([0 1],[ctrl_mean las_mean], '-', "Color","#77AC30",'LineWidth',2);
+                    ylabel('meal size');
+                    title('ArchT');
+                    xticks([0 1]);xticklabels({'control', 'laser on'});
+                    ylim([3 10]);
+                    xlim([-0.5 1.5]);
+
+hold off;
+%% histogram of meal sizes
+hold off;
+fh=figure;
+pl=1;
+for i = [1:3,5:6,9:18]
+    hi = Opto_data_cmb((Opto_data_cmb(:,3) == i),1);
+    figure(fh);
+        subplot(1,15,pl); histogram(hi);
+        xline(4,LineWidth=2);
+        xlim([0 20]);
+    pl=pl+1;    
+end
+
+
+%% TRY QUICK LME
+
+DD = Opto_data_cmb(Opto_data_cmb(:,2)~=(-1),:);%remove all hab data
+%correct meal sizes by replacing 7 and 8  with new labels 2 and 3
+animB2 = find(Opto_data_cmb(:,3)== 7);Opto_data_cmb(animB2,3) = 2;
+animC2 = find(Opto_data_cmb(:,3)== 8);Opto_data_cmb(animC2,3) = 3;
+
+TT = table(DD(:,1),categorical(DD(:,2)),categorical(DD(:,3)),categorical(DD(:,4)),'VariableNames',{'MealSize','Opto','Mouse','Opsin'});
+
+lme = fitlme(TT,'MealSize ~ Opsin*Opto + (1|Opsin:Mouse)');
+disp(lme);
+
+% vizualize?
+%% 
+DD = Opto_data_cmb(Opto_data_cmb(:,2)~=(-1),:);%remove all hab data
+
+%correct meal sizes by replacing 7 and 8  with new labels 2 and 3
+animB2 = find(Opto_data_cmb(:,3)== 7);Opto_data_cmb(animB2,3) = 2;
+animC2 = find(Opto_data_cmb(:,3)== 8);Opto_data_cmb(animC2,3) = 3;
+
+TT = table(DD(:,1),categorical(DD(:,2)),categorical(DD(:,3)),categorical(DD(:,4)),'VariableNames',{'MealSize','Opto','Mouse','Opsin'});
+
+lme = fitlme(TT,'MealSize ~ Opsin*Opto + (1|Opsin:Mouse)');
+disp(lme);
+%% anova
+% Assuming you have a table named 'data' with columns: 'MealSize', 'Opto', 'Opsin', and 'Mouse'
+DD = Opto_data_cmb(Opto_data_cmb(:,2)~=(-1),:);%remove all hab data
+data = table(DD(:,1),categorical(DD(:,2)),categorical(DD(:,3)),categorical(DD(:,4)),'VariableNames',{'MealSize','Opto','Mouse','Opsin'});
+
+% Compute mean meal size for each animal in control and laser conditions
+controlMeans = grpstats(data(data.Opto == categorical(0), :), 'Mouse', {'mean'}, 'DataVars', 'MealSize');
+controlMeans.Properties.VariableNames = {'Mouse','N' ,'ControlMean'};
+
+laserMeans = grpstats(data(data.Opto == categorical(1), :), 'Mouse', {'mean'}, 'DataVars', 'MealSize');
+laserMeans.Properties.VariableNames = {'Mouse','N',  'LaserMean'};
+
+%
+p = anovan(data.MealSize, {data.Opto,data.Opsin})
+p2 = anovan(data.MealSize, {data.Opto,data.Opsin},"model","interaction",'varnames',{'data.Opto','data.Opsin'})
+
+%%
+% Perform n-way ANOVA to compare the effect of 'Opto' and 'Opsin' on 'MealSize'
+[p_anova, tbl_anova, stats_anova] = anovan(data.MealSize, {data.Opto, data.Opsin}, ...
+    'varnames', {'Opto', 'Opsin'}, 'model', 'full');
+
+% Display ANOVA table
+disp(tbl_anova);
+
+% post hoc multiple comparison tests (Tukey's HSD)
+%comparison_results = multcompare(stats_anova, 'Dimension', [1 2], 'CType', "hsd");
+%disp(comparison_results);
+
+% post hoc multiple comparison tests (Bonferroni correction)
+[results,means,~,gnames] = multcompare(stats_anova, 'Dimension', [1 2], 'CType', 'bonferroni');
+tbl = array2table(results,"VariableNames", ...
+    ["Group A","Group B","Lower Limit","A-B","Upper Limit","P-value"]);
+tbl.("Group A")=gnames(tbl.("Group A"));
+tbl.("Group B")=gnames(tbl.("Group B"))
+
+
+%% ttests
+GFPmice= optomice(optomice(:,3) == 0,1:2);% column 1 is off 2 is laser on
+Archmice= optomice(optomice(:,3) == 1,1:2);%ArchT
+
+
+% Perform paired t-test on Opsin 0 group
+[~, p_val_opsin0] = ttest(GFPmice(:,2), GFPmice(:,1));
+
+% Perform paired t-test on Opsin 1 group
+[~, p_val_opsin1] = ttest(Archmice(:,2), Archmice(:,1));
+
+% Display p-values for Opsin 0 and Opsin 1 groups
+disp(['P-value for GFP: ', num2str(p_val_opsin0)]);
+disp(['P-value for Arch: ', num2str(p_val_opsin1)]);
+
+%% normality?
+% Sample paired data
+x = Archmice(:,1);
+y = Archmice(:,2);
+
+% Step 1: Calculate Differences
+differences = x - y;
+% Step 2: Test for Normality of Differences
+[h, p] = adtest(differences); %anderson darling test
+
+% Output results of normality test
+if h == 0
+    disp('The differences are normally distributed (fail to reject null hypothesis)');
+else
+    disp('The differences are not normally distributed (reject null hypothesis)');
+end
+
+%%
+DD2 = Opto_data_cmb(Opto_data_cmb(:,2)~=(-1),:);%remove all hab data
+for i = 1:size(DD2,1)
+    if DD2(i,3) == 5 | DD2(i,3) == 6 | DD2(i,3) == 9 | DD2(i,3) == 10
+        DD2(i,5) = 1;%male
+    else
+        DD2(i,5) = 0;%female
+    end    
+end
+for i = 1:size(DD2,1)
+    if DD2(i,3) == 1 | DD2(i,3) == 2 | DD2(i,3) == 3 | DD2(i,3) == 4 | DD2(i,3) == 5 | DD2(i,3) == 6
+        DD2(i,6) = 1;%batch1
+    else
+        DD2(i,6) = 2;%batch2
+    end   
+end
+
+
+TT2 = table(DD2(:,1),categorical(DD2(:,2)),categorical(DD2(:,3)),categorical(DD2(:,4)),categorical(DD2(:,5)),categorical(DD2(:,6)),'VariableNames',{'MealSize','Opto','Mouse','Opsin','Sex','Batch'});
+
+lme2 = fitlme(TT2,'MealSize ~ Opsin*Opto + (1|Mouse) + (1|Sex) + (1|Batch)');
+disp(lme2);
+
+
+% compare
+results = compare(lme,lme2)
+
+%% hab ipi plots
+f1=figure;
+f2=figure;
+perc=[];
+%order: A B C D E F C2 D2 E2 F2; C O O O C O   O C C O
+intervals = [29, 43, 22, 23, 20, 17, 43, 22, 31, 18, 14, 18];%batch1%batch2
+inh= [3, 4, 4, 4, 4, 4, 3, 3, 4, 4, 4, 4];
+
+for i = [1:6 9:12]
+    if i == 1 || i == 2 || i == 3 || i == 4 || i == 5 || i == 6 
+        chop_from= datetime(['2024-03-02 10:00:00.000'],'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');%start day
+    else
+        chop_from= datetime(['2024-03-23 10:00:00.000'],'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');%start day
+    end
+   
+    habt = Optodata(i).hab;
+    chop_to = chop_from + day(1);
+
+    x=datetime(habt.(1),'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
+    habt(find(x<chop_from),:)=[];%chops events to match the day
+    x=datetime(habt.(1),'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
+    habt(find(x>chop_to),:)=[];
+
+    habType = table2array(habt(:,"Type"));
+    habPellets = table2array(habt(:,"Pellet_number"));
+    habTime = datetime(table2array(habt(:,"Date_Time")),'InputFormat','yyyy-MM-dd HH:mm:ss.SSS');
+    hablatency= table2array(habt(:,'Latency'));
+    %create meals independent of code 
+    habretrievals = find(habType == "Pellet_Retrieved");
+    habretrievals = habt(habretrievals,:);
+    habret_lat = habretrievals(:,"Latency");
+    habret_las = habretrievals(:,"Laser");
+    habret_dat = habretrievals(:,"Date_Time");
+    sz = 1; 
+    habmeal_size = table;
+    for j = 1:size(habret_lat,1)
+        hablat = table2array(habret_lat(j,:));
+        if hablat <= intervals(i) % smaller or equal to selected IPI in seconds
+            sz = sz + 1; % size of the meal
+        elseif j == 1
+            habmeal = [habret_dat(j,:), array2table(sz) , habret_las(j,:) ];
+            habmeal_size = [habmeal_size; habmeal];
+            sz = 1;
+        else 
+            habmeal = [habret_dat(j-1,:), array2table(sz) , habret_las(j-1,:) ];
+            habmeal_size = [habmeal_size; habmeal];
+            sz = 1;
+        end      
+    end  
+
+    %Inter pellet intervals
+    IPI =  table2array(habret_lat);
+    er= find(IPI < 2);% look for errors???
+    IPI(er) = [];
+    IPI = round(IPI);
+    big = find(IPI > 90);
+    IPI(big) = [];
+    edges = [0 5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90];
+
+    figure(f1); 
+    subplot(2,10,i); histogram(IPI,edges);hold on;
+        sf = prctile(IPI,75);b=150;%plot([sf sf],[0 b]);
+        n0 = prctile(IPI,90);b=150;plot([n0 n0],[0 b]);
+        n5 = prctile(IPI,95);b=150;%plot([n5 n5],[0 b]);
+        %collect percentiles
+        pt = [i,sf, n0, n5];
+        perc = vertcat(perc, pt);
+        title(animal);
+        xlabel('IPI (5s bins)');
+        xlim([0 90]);
+        ylim([0 160]);
+
+    figure(f2); 
+    edges2 = [1:30];
+    subplot(2,10,i); histogram((habmeal_size.sz),edges2);hold on;
+        title(animal);
+        xlabel('IPI (5s bins)');
+        xlim([0 30]);
+        ylim([0 50]);
+
+end    
+
+
+%% latency to next pellet
+LatencyInh4raw = LatencyInh4;
+%LatencyInh4 = LatencyInh4raw;
+fn = fieldnames(LatencyInh4);%combine values of animals measured in both batches(2,3 is 7,8)
+for i = 1:size(fn,1)
+    LatencyInh4(2).(fn{i})= vertcat(LatencyInh4(2).(fn{i}),LatencyInh4(7).(fn{i}));
+    LatencyInh4(3).(fn{i})= vertcat(LatencyInh4(3).(fn{i}),LatencyInh4(8).(fn{i}));
+end    
+LatencyInh4(7:8) = [];
+
+%% plot
+f5 = figure;
+IDs = {'Ab1f','Bb1f','Cb1f','Db1f','Eb1m','Fb1m','Cb2m','Db2m','Eb2f','Fb2f','Ab3m','Bb3m','Cb3f','Db3f','Eb3m','Fb3m'};%org order
+name = {'Ab1f','Eb1m','Db2m','Eb2f','Bb3m','Db3f','Eb3m','Fb3m','Bb1f','Cb1f','Db1f','Fb1m','Cb2m','Fb2f', 'Ab3m','Cb3f'};% order i want to plot
+for i = [1:16]
+    lat_4 = LatencyInh4(i).pel4;las_4 = LatencyInh4(i).las4;
+    lat_5 = LatencyInh4(i).pel5;las_5 = LatencyInh4(i).las5;
+    %lat_6 = LatencyInh4(i).pel6;las_6 = LatencyInh4(i).las6;
+
+    pl = find(contains(name,IDs(i)));
+    tit = name(pl);
+
+    if pl == 1 ||pl == 2||pl == 3||pl == 4||pl == 5||pl == 6
+        col = "#4DBEEE";
+    else
+        col = "#77AC30";
+    end 
+    if pl == 1 ||pl == 13 %inh_3 groups
+        figure(f5);
+        subplot(1,16,pl);boxchart(las_4,lat_4,BoxFaceColor=col);hold on;
+        %swarmchart(las_4,lat_4,".");
+        title(tit);
+        ylabel('latency to next pellet');
+        xticks([0 1]);xticklabels({'control', 'laser on'});
+        ylim([0 30]);
+        ctrl_mean = mean(lat_4(find(las_4 == 0)));
+        las_mean = mean(lat_4(find(las_4 == 1)));
+        plot([0 1],[ctrl_mean las_mean], 'k*');%xy
+    else
+        figure(f5);
+        subplot(1,16,pl);boxchart(las_5,lat_5,BoxFaceColor=col);hold on;
+        %swarmchart(las_5,lat_5,".");
+        ylabel('latency to next pellet');
+        title(tit);
+        xticks([0 1]);xticklabels({'control', 'laser on'});
+        ylim([0 30]);
+        ctrl_mean = mean(lat_5(find(las_5 == 0)));
+        las_mean = mean(lat_5(find(las_5 == 1)));
+        plot([0 1],[ctrl_mean las_mean], 'k*');%xy
+    end
+
+%     figure(f5);
+%     subplot(1,16,pl);boxchart(las_4,lat_4,BoxFaceColor=col);hold on;
+%         %swarmchart(las_4,lat_4,".");
+%         title(tit);
+%         ylabel('latency to 4th pellet');
+%         xticks([0 1]);xticklabels({'control', 'laser on'});
+%         ylim([0 30]);
+%         ctrl_mean = mean(lat_4(find(las_4 == 0)));
+%         las_mean = mean(lat_4(find(las_4 == 1)));
+%         plot([0 1],[ctrl_mean las_mean], 'k*');%xy
+% 
+%     subplot(1,16,pl+16);boxchart(las_5,lat_5,BoxFaceColor=col);hold on;
+%         %swarmchart(las_5,lat_5,".");
+%         ylabel('latency to 5th pellet');
+%         xticks([0 1]);xticklabels({'control', 'laser on'});
+%         ylim([0 30]);
+%         ctrl_mean = mean(lat_5(find(las_5 == 0)));
+%         las_mean = mean(lat_5(find(las_5 == 1)));
+%         plot([0 1],[ctrl_mean las_mean], 'k*');%xy
+
+%     subplot(1,16,pl+32);boxchart(las_6,lat_6,BoxFaceColor=col);hold on;
+%         swarmchart(las_6,lat_6,".");
+%         ylabel('latency to 6th pellet');
+%         xticks([0 1]);xticklabels({'control', 'laser on'});
+%         ylim([0 30]);
+%         ctrl_mean = mean(lat_6(find(las_6 == 0)));
+%         las_mean = mean(lat_6(find(las_6 == 1)));
+%         plot([0 1],[ctrl_mean las_mean], 'k*');%xy
+    
+end
+%% plot only averg for each animal
+f5 = figure;
+IDs = {'Ab1f','Bb1f','Cb1f','Db1f','Eb1m','Fb1m','Cb2m','Db2m','Eb2f','Fb2f','Ab3m','Bb3m','Cb3f','Db3f','Eb3m','Fb3m'};%org order
+name = {'Ab1f','Eb1m','Db2m','Eb2f','Bb3m','Db3f','Eb3m','Fb3m','Bb1f','Cb1f','Db1f','Fb1m','Cb2m','Fb2f', 'Ab3m','Cb3f'};% order i want to plot
+figure(f5);
+for i = [1:16]
+    lat_4 = LatencyInh4(i).pel4;las_4 = LatencyInh4(i).las4;
+    lat_5 = LatencyInh4(i).pel5;las_5 = LatencyInh4(i).las5;
+    lat_6 = LatencyInh4(i).pel6;las_6 = LatencyInh4(i).las6;
+    pl = find(contains(name,IDs(i)));
+    tit = name(pl);
+%means
+    ctrl_mean4 = mean(lat_4(find(las_4 == 0)));
+    las_mean4 = mean(lat_4(find(las_4 == 1)));
+    ctrl_mean5 = mean(lat_4(find(las_5 == 0)));
+    las_mean5 = mean(lat_4(find(las_5 == 1)));
+    ctrl_mean6 = mean(lat_4(find(las_6 == 0)));
+    las_mean6 = mean(lat_4(find(las_6 == 1)));
+
+
+    if pl == 1 ||pl == 2||pl == 3||pl == 4||pl == 5||pl == 6
+        col = "#4DBEEE";
+        subplot(2,3,1);plot([0 1],[ctrl_mean4 las_mean4], 'o',"Color","#4DBEEE",'LineWidth',2);hold on;
+                plot([0 1],[ctrl_mean4 las_mean4], '-',"Color","#4DBEEE",'LineWidth',2);
+                ylabel('latency to 4th pellet');
+                title('Control');
+                xticks([0 1]);xticklabels({'laser off', 'laser on'});
+                ylim([0 15]);
+                xlim([-0.5 1.5]);
+                xline(0);xline(1);
+        subplot(2,3,2);plot([0 1],[ctrl_mean5 las_mean5], 'o',"Color","#4DBEEE",'LineWidth',2);hold on;
+                plot([0 1],[ctrl_mean5 las_mean5], '-',"Color","#4DBEEE",'LineWidth',2);
+                ylabel('latency to 5th pellet');
+                %title('Control');
+                xticks([0 1]);xticklabels({'laser off', 'laser on'});
+                ylim([0 15]);
+                xlim([-0.5 1.5]);  xline(0);xline(1);      
+        subplot(2,3,3);plot([0 1],[ctrl_mean6 las_mean6], 'o',"Color","#4DBEEE",'LineWidth',2);hold on;
+                plot([0 1],[ctrl_mean6 las_mean6], '-',"Color","#4DBEEE",'LineWidth',2);
+                ylabel('latency to 6th pellet');
+                %title('Control');
+                xticks([0 1]);xticklabels({'laser off', 'laser on'});
+                ylim([0 15]);
+                xlim([-0.5 1.5]);xline(0);xline(1);
+    else
+        col = "#77AC30";
+        subplot(2,3,4);plot([0 1],[ctrl_mean4 las_mean4], 'o', "Color","#77AC30", 'LineWidth',2); hold on;
+                plot([0 1],[ctrl_mean4 las_mean4], '-', "Color","#77AC30",'LineWidth',2);
+                ylabel('latency to 4th pellet');
+                title('ArchT');
+                xticks([0 1]);xticklabels({'laser off', 'laser on'});
+                ylim([0 15]);
+                xlim([-0.5 1.5]);xline(0);xline(1);
+        subplot(2,3,5);plot([0 1],[ctrl_mean5 las_mean5], 'o', "Color","#77AC30", 'LineWidth',2); hold on;
+                plot([0 1],[ctrl_mean5 las_mean5], '-', "Color","#77AC30",'LineWidth',2);
+                ylabel('latency to 5th pellet');
+                %title('ArchT');
+                xline(0);xline(1);
+                xticks([0 1]);xticklabels({'laser off', 'laser on'});
+                ylim([0 15]);
+                xlim([-0.5 1.5]);xline(0);xline(1);
+        subplot(2,3,6);plot([0 1],[ctrl_mean6 las_mean6], 'o', "Color","#77AC30", 'LineWidth',2); hold on;
+                plot([0 1],[ctrl_mean6 las_mean6], '-', "Color","#77AC30",'LineWidth',2);
+                ylabel('latency to 6th pellet');
+                %title('ArchT');
+                xticks([0 1]);xticklabels({'laser off', 'laser on'});
+                ylim([0 15]);
+                xlim([-0.5 1.5]); xline(0);xline(1);       
+    end     
+end
+%% averg latency to next pellet plot
+
+fn = fieldnames(LatencyInh4);%combine values of animals measured in both batches(2,3 is 7,8)
+for i = 1:size(fn,1)
+    LatencyInh4MeanC.(fn{i}) = vertcat(LatencyInh4(1).(fn{i}),LatencyInh4(5).(fn{i}),LatencyInh4(8).(fn{i}),LatencyInh4(4).(fn{i}),LatencyInh4(9).(fn{i}));
+    LatencyInh4MeanA.(fn{i}) = vertcat(LatencyInh4(2).(fn{i}),LatencyInh4(3).(fn{i}),LatencyInh4(4).(fn{i}),LatencyInh4(6).(fn{i}),LatencyInh4(7).(fn{i}),LatencyInh4(10).(fn{i}));
+end    
+
+lat_4 = LatencyInh4MeanC.pel4;las_4 = LatencyInh4MeanC.las4;
+lat_5 = LatencyInh4MeanC.pel5;las_5 = LatencyInh4MeanC.las5;
+lat_6 = LatencyInh4MeanC.pel6;las_6 = LatencyInh4MeanC.las6;
+
+f6 = figure;
+figure(f6);
+col = "#4DBEEE";
+    subplot(3,2,1);boxchart(las_4,lat_4,BoxFaceColor=col);hold on;
+        %swarmchart(las_4,lat_4,".");
+        ylabel('latency to 4th pellet');
+        xticks([0 1]);xticklabels({'control', 'laser on'});
+        ylim([0 30]);
+        ctrl_mean = mean(lat_4(find(las_4 == 0)));
+        las_mean = mean(lat_4(find(las_4 == 1)));
+        plot([0 1],[ctrl_mean las_mean], 'k*');%xy
+
+    subplot(3,2,3);boxchart(las_5,lat_5,BoxFaceColor=col);hold on;
+        %swarmchart(las_5,lat_5,".");
+        ylabel('latency to 5th pellet');
+        xticks([0 1]);xticklabels({'control', 'laser on'});
+        ylim([0 30]);
+        ctrl_mean = mean(lat_5(find(las_5 == 0)));
+        las_mean = mean(lat_5(find(las_5 == 1)));
+        plot([0 1],[ctrl_mean las_mean], 'k*');%xy
+
+    subplot(3,2,5);boxchart(las_6,lat_6,BoxFaceColor=col);hold on;
+        %swarmchart(las_6,lat_6,".");
+        ylabel('latency to 6th pellet');
+        xticks([0 1]);xticklabels({'control', 'laser on'});
+        ylim([0 30]);
+        ctrl_mean = mean(lat_6(find(las_6 == 0)));
+        las_mean = mean(lat_6(find(las_6 == 1)));
+        plot([0 1],[ctrl_mean las_mean], 'k*');%xy
+
+
+%archT
+
+lat_4 = LatencyInh4MeanA.pel4;las_4 = LatencyInh4MeanA.las4;
+lat_5 = LatencyInh4MeanA.pel5;las_5 = LatencyInh4MeanA.las5;
+lat_6 = LatencyInh4MeanA.pel6;las_6 = LatencyInh4MeanA.las6;
+
+
+figure(f6);
+col = "#77AC30";
+    subplot(3,2,2);boxchart(las_4,lat_4,BoxFaceColor=col);hold on;
+        %swarmchart(las_4,lat_4,".");
+        ylabel('latency to 4th pellet');
+        xticks([0 1]);xticklabels({'control', 'laser on'});
+        ylim([0 30]);
+        ctrl_mean = mean(lat_4(find(las_4 == 0)));
+        las_mean = mean(lat_4(find(las_4 == 1)));
+        plot([0 1],[ctrl_mean las_mean], 'k*');%xy
+
+    subplot(3,2,4);boxchart(las_5,lat_5,BoxFaceColor=col);hold on;
+        %swarmchart(las_5,lat_5,".");
+        ylabel('latency to 5th pellet');
+        xticks([0 1]);xticklabels({'control', 'laser on'});
+        ylim([0 30]);
+        ctrl_mean = mean(lat_5(find(las_5 == 0)));
+        las_mean = mean(lat_5(find(las_5 == 1)));
+        plot([0 1],[ctrl_mean las_mean], 'k*');%xy
+
+    subplot(3,2,6);boxchart(las_6,lat_6,BoxFaceColor=col);hold on;
+        %swarmchart(las_6,lat_6,".");
+        ylabel('latency to 6th pellet');
+        xticks([0 1]);xticklabels({'control', 'laser on'});
+        ylim([0 30]);
+        ctrl_mean = mean(lat_6(find(las_6 == 0)));
+        las_mean = mean(lat_6(find(las_6 == 1)));
+        plot([0 1],[ctrl_mean las_mean], 'k*');%xy

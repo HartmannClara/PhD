@@ -1,5 +1,6 @@
 clearvars -except ci_data; close all; 
-% Analysis of ci_data file, creates events_averg data file
+% Analysis of ci_data file, creates events_averg data file of shuffled
+% data!
 % 03/06/2023
 % to do:
 %% 
@@ -369,5 +370,5 @@ end
 %%
 
 
-save("events_averg_s2p_shuf_100.mat", "events_averg");
+save("events_averg_s2p_shuf_1.mat", "events_averg");
 

@@ -1,6 +1,7 @@
 % collection of OPTO data files into Optofiles struct
 %errors already removed and timechange accounted for
 %b1 and b2 are red in separetly and saved
+% some manual steps to adjust for the different start days
 %% loop for all animals
 close all;
 %clear all;
